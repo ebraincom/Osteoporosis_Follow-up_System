@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>骨质疏松症随访系统</title>
+    <meta name="description" content="基于LLM大模型的骨质疏松症患者跟踪随访系统" />
+    <meta name="keywords" content="骨质疏松症,随访系统,医疗管理,AI辅助" />
+    <meta name="author" content="北京智芸数据" />
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- 样式预加载 -->
+    <style>
+      /* 加载动画 */
+      .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        color: white;
+        margin-top: 20px;
+        font-size: 16px;
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 加载动画 -->
+    <div id="loading" class="loading">
+      <div>
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在加载骨质疏松症随访系统...</div>
+      </div>
+    </div>
+    
+    <!-- Vue应用挂载点 -->
+    <div id="app"></div>
+    
+    <!-- 脚本 -->
+    <script type="module" src="/src/main.ts"></script>
+    
+    <script>
+      // 隐藏加载动画
+      window.addEventListener('load', function() {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.opacity = '0';
+          setTimeout(() => {
+            loading.style.display = 'none';
+          }, 300);
+        }
+      });
+    </script>
+  </body>
+</html> 

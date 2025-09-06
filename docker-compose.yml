@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15
+    container_name: osteoporosis_postgres
+    environment:
+      POSTGRES_DB: osteoporosis_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - osteoporosis_network
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: osteoporosis_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - osteoporosis_network
+
+  # Python后端API
+  backend:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    container_name: osteoporosis_backend
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/osteoporosis_db
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - SECRET_KEY=your-production-secret-key-here
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend-python:/app
+      - uploads_data:/app/uploads
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+
+  # Vue前端
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: osteoporosis_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: osteoporosis_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+
+  # Celery工作队列
+  celery:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    container_name: osteoporosis_celery
+    command: celery -A app.core.celery worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/osteoporosis_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend-python:/app
+      - uploads_data:/app/uploads
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+
+  # Flower监控
+  flower:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    container_name: osteoporosis_flower
+    command: celery -A app.core.celery flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - celery
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
+
+networks:
+  osteoporosis_network:
+    driver: bridge 
