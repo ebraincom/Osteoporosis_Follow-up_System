@@ -16,9 +16,9 @@
 - ECharts
 
 ### 后端技术栈
-- Spring Boot 3.x (Java方案)
+- #Spring Boot 3.x (Java方案)，最终没有采用
 - FastAPI (Python方案)
-- MySQL 8.0 / PostgreSQL
+- #MySQL 8.0 / PostgreSQL，最终采用SQLite
 - Redis
 - JWT认证
 
