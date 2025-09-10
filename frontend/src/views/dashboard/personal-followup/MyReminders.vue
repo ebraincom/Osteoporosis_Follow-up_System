@@ -96,7 +96,7 @@
                 <el-icon :size="24">
                   <Bell v-if="reminder.type === 'followup'" />
                   <Warning v-else-if="reminder.type === 'urgent'" />
-                  <Medicine v-else-if="reminder.type === 'medication'" />
+                  <FirstAidKit v-else-if="reminder.type === 'medication'" />
                   <Document v-else />
                 </el-icon>
               </div>
@@ -250,7 +250,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Bell, Warning, Medicine, Document } from '@element-plus/icons-vue'
+import { Bell, Warning, FirstAidKit, Document } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 
