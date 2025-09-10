@@ -30,6 +30,7 @@ class FollowupRecord(Base):
     # 关联关系 - 使用字符串引用避免循环导入
     patient = relationship("Patient", back_populates="followup_records")
     user = relationship("User", back_populates="created_followups")
+    responses = relationship("FollowupResponse", back_populates="followup_record", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<FollowupRecord(id={self.id}, patient_id={self.patient_id}, time={self.time})>" 

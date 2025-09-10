@@ -117,11 +117,21 @@ const handleLogin = async () => {
       ElMessage.success('登录成功')
       router.push('/dashboard')
     } else {
-      ElMessage.error(result.error || '登录失败')
+      // 显示具体的错误信息
+      const errorMessage = result.error || '登录失败，请检查用户名和密码'
+      ElMessage.error(errorMessage)
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('登录错误:', error)
-    ElMessage.error('登录失败，请检查输入信息')
+    
+    // 处理表单验证错误或其他异常
+    let errorMessage = '登录失败，请检查输入信息'
+    
+    if (error?.message) {
+      errorMessage = error.message
+    }
+    
+    ElMessage.error(errorMessage)
   } finally {
     loading.value = false
   }

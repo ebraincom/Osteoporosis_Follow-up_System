@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # Python后端API (支持GPU)
+  backend:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile.gpu
+    container_name: osteoporosis_backend_gpu
+    environment:
+      - ENVIRONMENT=production
+      - SECRET_KEY=${SECRET_KEY:-your-super-secret-production-key-change-this}
+      - DATABASE_URL=sqlite:///./osteoporosis.db
+      - REDIS_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=["*"]
+      - CUDA_VISIBLE_DEVICES=0
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend-python/osteoporosis.db:/app/osteoporosis.db
+      - uploads_data:/app/uploads
+      - ./backend-python/backups:/app/backups
+      - /usr/local/cuda:/usr/local/cuda:ro
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: osteoporosis_redis_gpu
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
+
+  # Vue前端
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: osteoporosis_frontend_gpu
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: osteoporosis_nginx_gpu
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+
+  # AI模型服务 (为将来大模型集成预留)
+  ai-service:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile.gpu
+    container_name: osteoporosis_ai_service
+    environment:
+      - ENVIRONMENT=production
+      - CUDA_VISIBLE_DEVICES=0
+      - MODEL_CACHE_DIR=/app/models
+    ports:
+      - "8001:8001"
+    volumes:
+      - ai_models_data:/app/models
+      - /usr/local/cuda:/usr/local/cuda:ro
+    networks:
+      - osteoporosis_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - ai  # 使用profile，默认不启动
+
+volumes:
+  uploads_data:
+  redis_data:
+  ai_models_data:
+
+networks:
+  osteoporosis_network:
+    driver: bridge

@@ -107,6 +107,11 @@ const router = createRouter({
               path: 'my-reminders',
               name: 'PersonalFollowupReminders',
               component: () => import('@/views/dashboard/personal-followup/MyReminders.vue')
+            },
+            {
+              path: 'my-responses',
+              name: 'PersonalFollowupResponses',
+              component: () => import('@/views/dashboard/personal-followup/MyResponses.vue')
             }
           ]
         },

@@ -76,11 +76,21 @@ request.interceptors.response.use(
       status: response?.status,
       url: error.config?.url,
       method: error.config?.method,
-      data: error.config?.data
+      data: error.config?.data,
+      responseData: response?.data
     })
     
     if (response?.status === 401) {
       console.log('检测到401未授权错误，开始处理...')
+      
+      // 检查是否是登录页面的请求，如果是则不自动跳转
+      const isLoginRequest = error.config?.url?.includes('/login')
+      
+      if (isLoginRequest) {
+        console.log('这是登录请求的401错误，不执行自动登出')
+        // 对于登录请求的401错误，直接返回错误，让登录组件处理
+        return Promise.reject(error)
+      }
       
       // 检查是否是用户状态初始化过程中的错误
       const userStore = useUserStore()

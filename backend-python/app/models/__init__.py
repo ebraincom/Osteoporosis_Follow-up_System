@@ -1,12 +1,14 @@
-# 导入所有模型以确保它们被正确初始化
-from .user import User, UserType, Gender
-from .patient import Patient, RiskLevel
-from .followup import FollowupRecord
+# 导入所有模型以确保它们被注册到SQLAlchemy
+from .user import User
+from .patient import Patient
 from .report import Report
+from .followup import FollowupRecord
+from .followup_response import FollowupResponse
 
 __all__ = [
-    "User", "UserType", "Gender",
-    "Patient", "RiskLevel", 
+    "User",
+    "Patient", 
+    "Report",
     "FollowupRecord",
-    "Report"
-] 
+    "FollowupResponse"
+]

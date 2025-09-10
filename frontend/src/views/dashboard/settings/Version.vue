@@ -21,11 +21,27 @@
             </div>
             <div class="info-item">
               <span class="label">发布日期:</span>
-              <span class="value">2025-01-20</span>
+              <span class="value">2025-09-07</span>
             </div>
             <div class="info-item">
               <span class="label">构建编号:</span>
-              <span class="value">Build-20250120-001</span>
+              <span class="value">Build-20250907-001</span>
+            </div>
+            <div class="info-item">
+              <span class="label">系统运行时间:</span>
+              <span class="value">{{ systemUptime }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">当前时间:</span>
+              <span class="value">{{ currentTime }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">系统状态:</span>
+              <span class="value">
+                <el-tag :type="systemStatus.type" size="small">
+                  {{ systemStatus.text }}
+                </el-tag>
+              </span>
             </div>
           </div>
         </div>
@@ -144,7 +160,60 @@
 </template>
 
 <script setup lang="ts">
-// 版本信息页面逻辑
+import { ref, onMounted, onUnmounted } from 'vue'
+
+// 系统运行时间
+const systemUptime = ref('')
+const currentTime = ref('')
+let timeInterval: NodeJS.Timeout | null = null
+
+// 系统状态
+const systemStatus = ref({
+  type: 'success',
+  text: '正常运行'
+})
+
+// 计算系统运行时间
+const calculateUptime = () => {
+  const startTime = new Date('2025-09-07T18:00:00Z') // 假设系统启动时间
+  const now = new Date()
+  const diff = now.getTime() - startTime.getTime()
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  
+  systemUptime.value = `${days}天 ${hours}小时 ${minutes}分钟`
+}
+
+// 更新当前时间
+const updateCurrentTime = () => {
+  currentTime.value = new Date().toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+}
+
+onMounted(() => {
+  calculateUptime()
+  updateCurrentTime()
+  
+  // 每秒更新一次时间
+  timeInterval = setInterval(() => {
+    updateCurrentTime()
+    calculateUptime()
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (timeInterval) {
+    clearInterval(timeInterval)
+  }
+})
 </script>
 
 <style scoped>

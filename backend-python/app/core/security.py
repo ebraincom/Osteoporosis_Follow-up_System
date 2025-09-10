@@ -72,7 +72,7 @@ def get_current_active_user(token: str) -> Optional[dict]:
     return user
 
 # FastAPI dependency for authentication
-async def get_current_user_dependency(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user_dependency(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """FastAPI依赖：获取当前用户"""
     import logging
     logger = logging.getLogger(__name__)

@@ -148,6 +148,11 @@
                  <el-icon><Bell /></el-icon>
                  <template #title>随访提醒</template>
                </el-menu-item>
+
+               <el-menu-item index="/dashboard/personal-followup/my-responses">
+                 <el-icon><ChatDotRound /></el-icon>
+                 <template #title>随访回复</template>
+               </el-menu-item>
              </template>
            </template>
 

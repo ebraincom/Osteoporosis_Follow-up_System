@@ -62,9 +62,24 @@ export const useUserStore = defineStore('user', () => {
       })
       
       return { success: true }
-    } catch (error) {
+    } catch (error: any) {
       console.error('登录失败:', error)
-      return { success: false, error: error as string }
+      
+      // 提取具体的错误信息
+      let errorMessage = '登录失败，请检查输入信息'
+      
+      if (error?.response?.data?.detail) {
+        // 后端返回的具体错误信息
+        errorMessage = error.response.data.detail
+      } else if (error?.response?.data?.message) {
+        // 其他格式的错误信息
+        errorMessage = error.response.data.message
+      } else if (error?.message) {
+        // 网络错误或其他错误
+        errorMessage = error.message
+      }
+      
+      return { success: false, error: errorMessage }
     } finally {
       loading.value = false
     }
@@ -79,7 +94,6 @@ export const useUserStore = defineStore('user', () => {
         username: typeof registerForm.username,
         password: typeof registerForm.password,
         name: typeof registerForm.name,
-        email: typeof registerForm.email,
         phone: typeof registerForm.phone,
         userType: typeof registerForm.userType,
         institution: typeof registerForm.institution,
@@ -144,6 +158,11 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const setUser = (newUser: User) => {
+    user.value = newUser
+    localStorage.setItem('user', JSON.stringify(newUser))
+  }
+
   return {
     user,
     token,
@@ -155,6 +174,7 @@ export const useUserStore = defineStore('user', () => {
     register,
     logout,
     checkAuthStatus,
-    updateUser
+    updateUser,
+    setUser
   }
 }) 

@@ -2,7 +2,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_user, get_current_active_user
+from app.core.security import get_current_user, get_current_user_dependency
+from app.models.user import User as UserModel
 from app.crud import user as user_crud
 from app.schemas.user import User, UserUpdate
 
@@ -11,7 +12,7 @@ router = APIRouter()
 
 @router.get("/me", response_model=User)
 def get_current_user_info(
-    current_user: User = Depends(get_current_active_user)
+    current_user: UserModel = Depends(get_current_user_dependency)
 ):
     """获取当前用户信息"""
     return current_user
@@ -21,14 +22,12 @@ def get_current_user_info(
 def update_current_user(
     user_update: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: UserModel = Depends(get_current_user_dependency)
 ):
     """更新当前用户信息"""
-    # 不允许更新用户名和邮箱
-    if user_update.username or user_update.email:
-        raise HTTPException(status_code=400, detail="不能修改用户名和邮箱")
+    # 不允许更新用户名和邮箱（这些字段在UserUpdate schema中不存在，所以不需要检查）
     
-    updated_user = user_crud.update_user(db=db, user_id=current_user.id, user=user_update)
+    updated_user = user_crud.update_user(db=db, user_id=current_user.id, user_update=user_update)
     if not updated_user:
         raise HTTPException(status_code=404, detail="用户不存在")
     
@@ -38,7 +37,7 @@ def update_current_user(
 @router.get("/statistics/overview")
 def get_user_statistics(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: UserModel = Depends(get_current_user_dependency)
 ):
     """获取用户统计信息（仅管理员）"""
     # 检查权限：只有管理员可以查看用户统计

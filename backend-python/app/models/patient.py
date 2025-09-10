@@ -45,6 +45,7 @@ class Patient(Base):
     # 关联关系 - 使用字符串引用避免循环导入
     user = relationship("User", back_populates="patients")
     followup_records = relationship("FollowupRecord", back_populates="patient", cascade="all, delete-orphan")
+    followup_responses = relationship("FollowupResponse", back_populates="patient", cascade="all, delete-orphan")
     
     # 系统字段
     created_at = Column(DateTime(timezone=True), server_default=func.now())

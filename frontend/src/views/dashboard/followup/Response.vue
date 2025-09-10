@@ -1,26 +1,27 @@
 <template>
   <div class="followup-response">
+
     <!-- 顶部概览卡片 -->
     <div class="overview-cards">
       <div class="overview-card low-risk">
         <div class="card-content">
           <div class="card-title">低危</div>
-          <div class="card-subtitle">待随访人数</div>
-          <div class="card-number">30人</div>
+          <div class="card-subtitle">患者人数</div>
+          <div class="card-number">{{ statistics.low }}人</div>
         </div>
       </div>
       <div class="overview-card medium-risk">
         <div class="card-content">
           <div class="card-title">中危</div>
-          <div class="card-subtitle">待随访人数</div>
-          <div class="card-number">20人</div>
+          <div class="card-subtitle">患者人数</div>
+          <div class="card-number">{{ statistics.medium }}人</div>
         </div>
       </div>
       <div class="overview-card high-risk">
         <div class="card-content">
           <div class="card-title">高危</div>
-          <div class="card-subtitle">待随访人数</div>
-          <div class="card-number">12人</div>
+          <div class="card-subtitle">患者人数</div>
+          <div class="card-number">{{ statistics.high }}人</div>
         </div>
       </div>
     </div>
@@ -31,31 +32,49 @@
       <div class="left-panel">
         <!-- 患者列表表格 -->
         <div class="table-section">
+          <div class="table-header">
+            <h3>患者列表</h3>
+            <el-button type="primary" @click="loadPatients" :loading="loading">
+              刷新数据
+            </el-button>
+          </div>
           <el-table
             :data="patients"
             style="width: 100%"
             @row-click="handlePatientClick"
             :row-class-name="getRowClassName"
             highlight-current-row
+            v-loading="loading"
           >
-            <el-table-column prop="id" label="序号" width="80" />
-            <el-table-column prop="name" label="用户名称" width="120" />
-            <el-table-column label="病人等级" width="120">
+            <el-table-column prop="patient_id" label="档案编号" width="100" show-overflow-tooltip />
+            <el-table-column prop="name" label="患者姓名" width="100" />
+            <el-table-column prop="age" label="年龄" width="60" align="center" />
+            <el-table-column prop="gender" label="性别" width="60" align="center">
+              <template #default="{ row }">
+                {{ row.gender === 'male' ? '男' : '女' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="风险等级" width="80" align="center">
               <template #default="{ row }">
                 <el-tag 
-                  :type="getLevelType(row.level)"
+                  :type="getLevelType(row.risk_level)"
                   size="small"
                 >
-                  {{ getLevelText(row.level) }}
+                  {{ getLevelText(row.risk_level) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="responseTime" label="应答时间" width="180" />
-            <el-table-column label="详细信息" width="120">
+            <el-table-column prop="phone" label="联系电话" width="120" show-overflow-tooltip />
+            <el-table-column label="操作" width="180">
               <template #default="{ row }">
-                <el-button type="primary" size="small" @click.stop="viewDetails(row)">
-                  点击查看
-                </el-button>
+                <div style="display: flex; gap: 4px; flex-wrap: nowrap;">
+                  <el-button type="primary" size="small" @click.stop="viewDetails(row)">
+                    查看回复
+                  </el-button>
+                  <el-button type="success" size="small" @click.stop="createFollowupRecord(row)">
+                    创建随访
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -67,6 +86,9 @@
         <div v-if="selectedPatient" class="response-detail">
           <div class="detail-header">
             <h3>随访应答-{{ selectedPatient.name }}</h3>
+            <el-button type="primary" @click="loadPatientResponses(selectedPatient.id)" :loading="responseLoading">
+              刷新回复
+            </el-button>
           </div>
 
           <!-- 患者基本信息 -->
@@ -78,7 +100,7 @@
               </div>
               <div class="info-item">
                 <span class="label">性别:</span>
-                <span class="value">{{ selectedPatient.gender }}</span>
+                <span class="value">{{ selectedPatient.gender === 'male' ? '男' : '女' }}</span>
               </div>
               <div class="info-item">
                 <span class="label">年龄:</span>
@@ -90,63 +112,70 @@
               </div>
             </div>
             <div class="risk-level">
-              <el-tag :type="getLevelType(selectedPatient.level)" size="small">
-                {{ getLevelText(selectedPatient.level) }}
+              <el-tag :type="getLevelType(selectedPatient.risk_level)" size="small">
+                {{ getLevelText(selectedPatient.risk_level) }}
               </el-tag>
             </div>
           </div>
 
           <!-- 关键指标 -->
           <div class="key-indicators">
-            <h4>关键指标 (骨密度) - {{ selectedPatient.boneDensity.date }}检测</h4>
+            <h4>关键指标 (骨密度)</h4>
             <div class="indicators-content">
               <div class="indicator-item">
-                <span class="label">检测方法:</span>
-                <span class="value">{{ selectedPatient.boneDensity.method }}</span>
-              </div>
-              <div class="indicator-item">
-                <span class="label">检测部位:</span>
-                <span class="value">{{ selectedPatient.boneDensity.site }}</span>
-              </div>
-              <div class="indicator-item">
                 <span class="label">T值:</span>
-                <span class="value">{{ selectedPatient.boneDensity.tScore }}</span>
+                <span class="value">{{ selectedPatient.t_score || '未检测' }}</span>
               </div>
               <div class="indicator-item">
                 <span class="label">Z值:</span>
-                <span class="value">{{ selectedPatient.boneDensity.zScore }}</span>
+                <span class="value">{{ selectedPatient.z_score || '未检测' }}</span>
               </div>
-              <div class="indicator-item full-width">
-                <span class="label">结论:</span>
-                <span class="value">{{ selectedPatient.boneDensity.conclusion }}</span>
+              <div class="indicator-item">
+                <span class="label">身高:</span>
+                <span class="value">{{ selectedPatient.height ? selectedPatient.height + 'cm' : '未填写' }}</span>
+              </div>
+              <div class="indicator-item">
+                <span class="label">体重:</span>
+                <span class="value">{{ selectedPatient.weight ? selectedPatient.weight + 'kg' : '未填写' }}</span>
+              </div>
+              <div class="indicator-item">
+                <span class="label">BMI:</span>
+                <span class="value">{{ selectedPatient.bmi || '未计算' }}</span>
               </div>
             </div>
           </div>
 
-          <!-- 回访应答 -->
+          <!-- 随访应答列表 -->
           <div class="response-section">
-            <h4>回访应答 - {{ selectedPatient.response.time }}</h4>
-            <div class="response-content">
-              <div class="response-item">
-                <span class="label">总体感受:</span>
-                <span class="value">{{ selectedPatient.response.overallFeeling }}</span>
-              </div>
-              <div class="response-item">
-                <span class="label">状况改善:</span>
-                <span class="value">{{ selectedPatient.response.improvement }}</span>
-              </div>
-              <div class="response-item">
-                <span class="label">用药依从性:</span>
-                <span class="value">{{ selectedPatient.response.medicationAdherence }}</span>
-              </div>
-              <div class="response-item">
-                <span class="label">运动量:</span>
-                <span class="value">{{ selectedPatient.response.exerciseVolume }}</span>
-              </div>
-              <div class="response-item">
-                <span class="label">饮食调整:</span>
-                <span class="value">{{ selectedPatient.response.dietAdjustment }}</span>
-              </div>
+            <h4>随访应答记录 ({{ patientResponses.length }}条)</h4>
+            <div v-if="patientResponses.length === 0" class="empty-responses">
+              <el-empty description="暂无随访应答记录" />
+            </div>
+            <div v-else class="responses-table">
+              <el-table :data="patientResponses" style="width: 100%" v-loading="responseLoading" stripe>
+                <el-table-column prop="id" label="应答ID" width="70" align="center" />
+                <el-table-column label="回复时间" width="140" align="center">
+                  <template #default="{ row }">
+                    {{ formatDate(row.response_time) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="状态" width="80" align="center">
+                  <template #default="{ row }">
+                    <el-tag :type="row.is_completed ? 'success' : 'warning'" size="small">
+                      {{ row.is_completed ? '已完成' : '未完成' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="overall_feeling" label="总体感受" width="90" show-overflow-tooltip />
+                <el-table-column prop="improvement_level" label="改善程度" width="90" show-overflow-tooltip />
+                <el-table-column label="操作" width="90" align="center">
+                  <template #default="{ row }">
+                    <el-button type="primary" size="small" @click="viewResponseDetail(row)">
+                      查看详情
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
             </div>
           </div>
         </div>
@@ -156,104 +185,379 @@
         </div>
       </div>
     </div>
+
+    <!-- 随访应答详情弹窗 -->
+    <el-dialog
+      v-model="responseDetailVisible"
+      title="随访应答详情"
+      width="800px"
+      :before-close="handleCloseResponseDetail"
+    >
+      <div v-if="selectedResponse" class="response-detail">
+        <div class="detail-header">
+          <div class="detail-info">
+            <span class="label">应答ID:</span>
+            <span class="value">{{ selectedResponse.id }}</span>
+          </div>
+          <div class="detail-info">
+            <span class="label">回复时间:</span>
+            <span class="value">{{ formatDate(selectedResponse.response_time) }}</span>
+          </div>
+          <div class="detail-info">
+            <span class="label">状态:</span>
+            <el-tag :type="selectedResponse.is_completed ? 'success' : 'warning'" size="small">
+              {{ selectedResponse.is_completed ? '已完成' : '未完成' }}
+            </el-tag>
+          </div>
+        </div>
+        
+        <div class="detail-content">
+          <div class="detail-section">
+            <h5>基本信息</h5>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="label">总体感受:</span>
+                <span class="value">{{ selectedResponse.overall_feeling || '未填写' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">改善程度:</span>
+                <span class="value">{{ selectedResponse.improvement_level || '未填写' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">用药依从性:</span>
+                <span class="value">{{ selectedResponse.medication_adherence || '未填写' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">运动量:</span>
+                <span class="value">{{ selectedResponse.exercise_volume || '未填写' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">饮食调整:</span>
+                <span class="value">{{ selectedResponse.diet_adjustment || '未填写' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">疼痛程度:</span>
+                <span class="value">{{ selectedResponse.pain_level ? selectedResponse.pain_level + '分' : '未填写' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h5>生活状态</h5>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="label">睡眠质量:</span>
+                <span class="value">{{ selectedResponse.sleep_quality || '未填写' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">日常活动:</span>
+                <span class="value">{{ selectedResponse.daily_activity || '未填写' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">情绪状态:</span>
+                <span class="value">{{ selectedResponse.mood_status || '未填写' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">社交活动:</span>
+                <span class="value">{{ selectedResponse.social_activity || '未填写' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h5>其他信息</h5>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="label">副作用:</span>
+                <span class="value">{{ selectedResponse.side_effects || '无' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">担忧:</span>
+                <span class="value">{{ selectedResponse.concerns || '无' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="label">建议:</span>
+                <span class="value">{{ selectedResponse.suggestions || '无' }}</span>
+              </div>
+              <div class="detail-field full-width">
+                <span class="label">其他信息:</span>
+                <span class="value">{{ selectedResponse.additional_info || '无' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="responseDetailVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted, computed, h } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { patientApi } from '@/api/patient'
+import { followupResponseApi } from '@/api/followupResponse'
+import { followupApi } from '@/api/followup'
+import { useUserStore } from '@/stores/user'
+import axios from 'axios'
+
+// 用户状态
+const userStore = useUserStore()
 
 // 响应式数据
 const selectedPatient = ref<any>(null)
+const patients = ref<any[]>([])
+const patientResponses = ref<any[]>([])
+const loading = ref(false)
+const responseLoading = ref(false)
 
-// 模拟患者数据
-const patients = ref([
-  {
-    id: 1,
-    name: '张伟',
-    level: 'low',
-    responseTime: '2025/8/15 13:00',
-    gender: '男',
-    age: 45,
-    phone: '138****1234',
-    boneDensity: {
-      date: '2024年05月20日',
-      method: '双能X线吸收检测法(DXA)',
-      site: '腰椎(L1-L4)',
-      tScore: '-0.8 (处于正常骨量范围下限)',
-      zScore: '+0.2',
-      conclusion: '骨密度在正常范围内,但接近骨量减少临界值,需关注生活方式干预。'
-    },
-    response: {
-      time: '2025/8/15 13:00',
-      overallFeeling: '良好',
-      improvement: '明显改善',
-      medicationAdherence: '完全按照医嘱',
-      exerciseVolume: '每周能完成2次30分钟以上的快走',
-      dietAdjustment: '每日早餐必喝一杯牛奶或酸奶'
-    }
-  },
-  {
-    id: 2,
-    name: '李娜',
-    level: 'medium',
-    responseTime: '2025/8/13 13:00',
-    gender: '女',
-    age: 62,
-    phone: '136****2345',
-    boneDensity: {
-      date: '2024年05月21日',
-      method: '双能X线吸收检测法(DXA)',
-      site: '腰椎(L1-L4)及左侧股骨颈',
-      tScore: '-1.9 (骨量减少)',
-      zScore: '-1.2',
-      conclusion: '骨密度明显低于峰值骨量，符合中度骨质疏松症标准。'
-    },
-    response: {
-      time: '2025/8/13 13:00',
-      overallFeeling: '一般',
-      improvement: '有所改善',
-      medicationAdherence: '基本按照医嘱',
-      exerciseVolume: '每周能完成1次30分钟的快走',
-      dietAdjustment: '增加了钙质摄入，每日喝牛奶'
-    }
-  },
-  {
-    id: 3,
-    name: '王建国',
-    level: 'high',
-    responseTime: '2025/8/13 13:00',
-    gender: '男',
-    age: 78,
-    phone: '138****3456',
-    boneDensity: {
-      date: '2024年05月24日',
-      method: '双能X线吸收检测法(DXA)',
-      site: '腰椎(L1-L4)及左侧股骨颈',
-      tScore: '-3.2 (重度骨质疏松)',
-      zScore: '-2.1',
-      conclusion: '骨密度显著低于峰值骨量，符合重度骨质疏松症标准。'
-    },
-    response: {
-      time: '2025/8/13 13:00',
-      overallFeeling: '较差',
-      improvement: '改善不明显',
-      medicationAdherence: '有时忘记服药',
-      exerciseVolume: '因身体原因，运动量较少',
-      dietAdjustment: '尽量增加钙质摄入，但食欲不佳'
-    }
-  }
-])
+// 详情弹窗相关
+const responseDetailVisible = ref(false)
+const selectedResponse = ref<any>(null)
+
+// 统计数据
+const statistics = ref({
+  low: 0,
+  medium: 0,
+  high: 0
+})
 
 // 方法
-const handlePatientClick = (row: any) => {
+
+const loadPatients = async () => {
+  try {
+    loading.value = true
+    const response = await patientApi.getPatients()
+    patients.value = response?.patients || []
+    
+    // 计算统计数据
+    statistics.value = {
+      low: patients.value.filter(p => p.risk_level === 'low').length,
+      medium: patients.value.filter(p => p.risk_level === 'medium').length,
+      high: patients.value.filter(p => p.risk_level === 'high').length
+    }
+    
+    // 默认选中第一个患者
+    if (patients.value.length > 0) {
+      selectedPatient.value = patients.value[0]
+      await loadPatientResponses(patients.value[0].id)
+    }
+  } catch (error) {
+    console.error('加载患者列表失败:', error)
+    ElMessage.error('加载患者列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadPatientResponses = async (patientId: number) => {
+  try {
+    responseLoading.value = true
+    const response = await followupResponseApi.getPatientResponses(patientId)
+    console.log('患者应答API响应:', response)
+    patientResponses.value = response || []
+  } catch (error) {
+    console.error('加载患者应答失败:', error)
+    ElMessage.error('加载患者应答失败')
+  } finally {
+    responseLoading.value = false
+  }
+}
+
+const handlePatientClick = async (row: any) => {
   selectedPatient.value = row
+  await loadPatientResponses(row.id)
   ElMessage.info(`已选择患者: ${row.name}`)
 }
 
-const viewDetails = (patient: any) => {
+const viewDetails = async (patient: any) => {
   selectedPatient.value = patient
+  await loadPatientResponses(patient.id)
   ElMessage.info(`查看患者: ${patient.name} 的应答详情`)
+}
+
+const createFollowupRecord = async (patient: any) => {
+  try {
+    // 创建随访表单数据
+    const formData = ref({
+      patient_id: patient.id,
+      time: new Date().toISOString().slice(0, 16), // 格式化为 datetime-local 格式
+      method: '电话随访',
+      location: '医院',
+      details: '',
+      patient_status: '待回复',
+      recommendations: ''
+    })
+
+    // 使用 ElMessageBox 创建自定义表单
+    const result = await ElMessageBox({
+      title: `为患者 ${patient.name} 创建随访记录`,
+      message: h('div', { class: 'patient-detail-form' }, [
+        // 患者基本信息
+        h('div', { class: 'patient-info-section' }, [
+          h('h3', { class: 'section-title' }, '患者基本信息'),
+          h('div', { class: 'info-grid' }, [
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '姓名:'),
+              h('span', { class: 'info-value' }, patient.name)
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '性别:'),
+              h('span', { class: 'info-value' }, patient.gender === 'male' ? '男' : '女')
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '年龄:'),
+              h('span', { class: 'info-value' }, `${patient.age}岁`)
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '联系电话:'),
+              h('span', { class: 'info-value' }, patient.phone)
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '风险等级:'),
+              h('span', { class: 'info-value' }, [
+                h('span', { 
+                  class: `risk-tag ${getLevelType(patient.risk_level)}` 
+                }, getLevelText(patient.risk_level))
+              ])
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '档案编号:'),
+              h('span', { class: 'info-value' }, patient.patient_id)
+            ])
+          ])
+        ]),
+        
+        // 随访信息
+        h('div', { class: 'followup-info-section' }, [
+          h('h3', { class: 'section-title' }, '随访信息'),
+          h('div', { class: 'info-grid' }, [
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '随访时间 *:'),
+              h('input', {
+                type: 'datetime-local',
+                value: formData.value.time,
+                onInput: (e: any) => formData.value.time = e.target.value,
+                class: 'info-input'
+              })
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '随访方式:'),
+              h('select', {
+                value: formData.value.method,
+                onChange: (e: any) => formData.value.method = e.target.value,
+                class: 'info-select'
+              }, [
+                h('option', { value: '电话随访' }, '电话随访'),
+                h('option', { value: '门诊随访' }, '门诊随访'),
+                h('option', { value: '视频随访' }, '视频随访'),
+                h('option', { value: '上门随访' }, '上门随访')
+              ])
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '随访地点:'),
+              h('input', {
+                type: 'text',
+                value: formData.value.location,
+                onInput: (e: any) => formData.value.location = e.target.value,
+                placeholder: '请输入随访地点',
+                class: 'info-input'
+              })
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('span', { class: 'info-label' }, '患者状态:'),
+              h('select', {
+                value: formData.value.patient_status,
+                onChange: (e: any) => formData.value.patient_status = e.target.value,
+                class: 'info-select'
+              }, [
+                h('option', { value: '待回复' }, '待回复'),
+                h('option', { value: '已回复' }, '已回复'),
+                h('option', { value: '失联' }, '失联'),
+                h('option', { value: '拒绝随访' }, '拒绝随访')
+              ])
+            ])
+          ])
+        ]),
+        
+        // 随访内容
+        h('div', { class: 'followup-content-section' }, [
+          h('h3', { class: 'section-title' }, '随访内容'),
+          h('div', { class: 'content-item' }, [
+            h('span', { class: 'content-label' }, '随访详情 *:'),
+            h('textarea', {
+              value: formData.value.details,
+              onInput: (e: any) => formData.value.details = e.target.value,
+              placeholder: '请详细描述随访内容，包括患者主诉、检查结果、用药情况、症状变化等...',
+              rows: 4,
+              class: 'content-textarea'
+            })
+          ]),
+          h('div', { class: 'content-item' }, [
+            h('span', { class: 'content-label' }, '医生建议:'),
+            h('textarea', {
+              value: formData.value.recommendations,
+              onInput: (e: any) => formData.value.recommendations = e.target.value,
+              placeholder: '请输入医生的建议和指导，包括用药调整、复查安排、注意事项等...',
+              rows: 3,
+              class: 'content-textarea'
+            })
+          ])
+        ])
+      ]),
+      showCancelButton: true,
+      confirmButtonText: '创建随访记录',
+      cancelButtonText: '取消',
+      customClass: 'patient-detail-dialog',
+      beforeClose: (action: string, instance: any, done: any) => {
+        if (action === 'confirm') {
+          // 验证必填字段
+          if (!formData.value.details.trim()) {
+            ElMessage.error('请填写随访内容')
+            return
+          }
+          if (!formData.value.time) {
+            ElMessage.error('请选择随访时间')
+            return
+          }
+          
+          // 创建随访数据
+          const followupData = {
+            patient_id: formData.value.patient_id,
+            time: new Date(formData.value.time).toISOString(),
+            method: formData.value.method,
+            location: formData.value.location,
+            details: formData.value.details,
+            patient_status: formData.value.patient_status,
+            recommendations: formData.value.recommendations
+          }
+          
+          // 调用API创建随访
+          followupApi.createFollowup(followupData).then(() => {
+            ElMessage.success('随访记录创建成功')
+            // 重新加载患者应答
+            loadPatientResponses(patient.id)
+            done()
+          }).catch((error) => {
+            console.error('创建随访记录失败:', error)
+            ElMessage.error('创建随访记录失败')
+          })
+        } else {
+          done()
+        }
+      }
+    })
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('创建随访记录失败:', error)
+      ElMessage.error('创建随访记录失败')
+    }
+  }
 }
 
 const getLevelType = (level: string) => {
@@ -278,11 +582,26 @@ const getRowClassName = ({ row }: { row: any }) => {
   return selectedPatient.value?.id === row.id ? 'selected-row' : ''
 }
 
+// 查看随访应答详情
+const viewResponseDetail = (response: any) => {
+  selectedResponse.value = response
+  responseDetailVisible.value = true
+}
+
+// 关闭详情弹窗
+const handleCloseResponseDetail = () => {
+  responseDetailVisible.value = false
+  selectedResponse.value = null
+}
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN')
+}
+
 onMounted(() => {
-  // 默认选中第一个患者
-  if (patients.value.length > 0) {
-    selectedPatient.value = patients.value[0]
-  }
+  loadPatients()
 })
 </script>
 
@@ -361,9 +680,10 @@ onMounted(() => {
 
 /* 左侧面板 */
 .left-panel {
-  flex: 2;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 500px;
 }
 
 .table-section {
@@ -381,6 +701,7 @@ onMounted(() => {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: auto;
+  min-width: 500px;
 }
 
 .response-detail {
@@ -391,6 +712,9 @@ onMounted(() => {
   border-bottom: 2px solid #e9ecef;
   padding-bottom: 15px;
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .detail-header h3 {
@@ -535,6 +859,19 @@ onMounted(() => {
 }
 
 /* 表格样式 */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 0 10px;
+}
+
+.table-header h3 {
+  margin: 0;
+  color: #333;
+}
+
 :deep(.el-table) {
   border-radius: 8px;
 }
@@ -553,8 +890,260 @@ onMounted(() => {
   background-color: #f5f5f5;
 }
 
+/* 应答列表样式 */
+.responses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.response-item {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 15px;
+  background: #f8f9fa;
+}
+
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.response-time {
+  font-weight: bold;
+  color: #333;
+}
+
+.response-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.response-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.response-field .label {
+  font-weight: bold;
+  color: #333;
+  min-width: 80px;
+  white-space: nowrap;
+}
+
+.response-field .value {
+  color: #666;
+  flex: 1;
+  line-height: 1.5;
+}
+
+.empty-responses {
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* 患者详情表单样式 */
+.patient-detail-form {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.patient-info-section,
+.followup-info-section,
+.followup-content-section {
+  margin-bottom: 24px;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.section-title {
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 0;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  min-height: 48px;
+}
+
+.info-item:nth-child(odd) {
+  border-right: 1px solid #f0f0f0;
+}
+
+.info-item:last-child,
+.info-item:nth-last-child(2) {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #666;
+  min-width: 80px;
+  margin-right: 12px;
+  font-size: 14px;
+}
+
+.info-value {
+  color: #333;
+  font-size: 14px;
+  flex: 1;
+}
+
+.risk-tag {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.risk-tag.success {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.risk-tag.warning {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.risk-tag.danger {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.info-input,
+.info-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+  transition: border-color 0.2s;
+}
+
+.info-input:focus,
+.info-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.info-select {
+  cursor: pointer;
+}
+
+.content-item {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.content-item:last-child {
+  border-bottom: none;
+}
+
+.content-label {
+  display: block;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.content-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  background-color: #fff;
+  transition: border-color 0.2s;
+}
+
+.content-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* 对话框样式 */
+:deep(.patient-detail-dialog) {
+  width: 90% !important;
+  max-width: 900px !important;
+}
+
+:deep(.patient-detail-dialog .el-message-box__content) {
+  padding: 0 !important;
+}
+
+:deep(.patient-detail-dialog .el-message-box__header) {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e1e5e9;
+  background-color: #f8f9fa;
+}
+
+:deep(.patient-detail-dialog .el-message-box__title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+:deep(.patient-detail-dialog .el-message-box__btns) {
+  padding: 16px 20px;
+  border-top: 1px solid #e1e5e9;
+  background-color: #f8f9fa;
+}
+
+:deep(.patient-detail-dialog .el-button) {
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+:deep(.patient-detail-dialog .el-button--primary) {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+:deep(.patient-detail-dialog .el-button--primary:hover) {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
 /* 响应式设计 */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .main-content {
     flex-direction: column;
   }
@@ -562,6 +1151,7 @@ onMounted(() => {
   .left-panel,
   .right-panel {
     flex: none;
+    min-width: auto;
   }
   
   .overview-cards {
@@ -581,5 +1171,95 @@ onMounted(() => {
   .response-content {
     gap: 8px;
   }
+  
+  .followup-form {
+    max-width: 100%;
+  }
 }
-</style> 
+
+/* 随访应答详情弹窗样式 */
+.response-detail {
+  .detail-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    
+    .detail-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .label {
+        font-weight: 600;
+        color: #606266;
+        min-width: 80px;
+      }
+      
+      .value {
+        color: #303133;
+      }
+    }
+  }
+  
+  .detail-content {
+    .detail-section {
+      margin-bottom: 24px;
+      
+      h5 {
+        margin: 0 0 16px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e4e7ed;
+        color: #303133;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+        
+        .detail-field {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          
+          &.full-width {
+            grid-column: 1 / -1;
+          }
+          
+          .label {
+            font-weight: 600;
+            color: #606266;
+            min-width: 100px;
+            flex-shrink: 0;
+          }
+          
+          .value {
+            color: #303133;
+            line-height: 1.5;
+            word-break: break-word;
+          }
+        }
+      }
+    }
+  }
+}
+
+.responses-table {
+  margin-top: 16px;
+}
+
+.responses-table .el-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.responses-table .el-button {
+  margin: 0;
+}
+</style>

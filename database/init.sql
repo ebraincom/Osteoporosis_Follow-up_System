@@ -103,6 +103,31 @@ CREATE TABLE IF NOT EXISTS followups (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 创建随访应答表
+CREATE TABLE IF NOT EXISTS followup_responses (
+    id SERIAL PRIMARY KEY,
+    followup_id INTEGER REFERENCES followup_records(id) ON DELETE CASCADE,
+    patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+    response_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_completed BOOLEAN DEFAULT FALSE,
+    overall_feeling VARCHAR(100),
+    improvement_level VARCHAR(100),
+    medication_adherence VARCHAR(100),
+    exercise_volume TEXT,
+    diet_adjustment TEXT,
+    pain_level INTEGER CHECK (pain_level >= 1 AND pain_level <= 10),
+    sleep_quality VARCHAR(100),
+    daily_activity VARCHAR(100),
+    mood_status VARCHAR(100),
+    social_activity VARCHAR(100),
+    side_effects TEXT,
+    concerns TEXT,
+    suggestions TEXT,
+    additional_info TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 创建提醒日志表
 CREATE TABLE IF NOT EXISTS reminder_logs (
     id SERIAL PRIMARY KEY,
