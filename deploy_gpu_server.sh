@@ -15,8 +15,8 @@ if ! command -v docker &> /dev/null; then
     
     # 安装Docker
     curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo sh get-docker.sh
-    sudo usermod -aG docker $USER
+    sh get-docker.sh
+    usermod -aG docker $USER
     
     echo "✅ Docker安装完成，请重新登录或执行 'newgrp docker'"
     exit 1
@@ -25,8 +25,8 @@ fi
 # 检查Docker Compose
 if ! command -v docker-compose &> /dev/null; then
     echo "❌ Docker Compose未安装，开始安装..."
-    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
+    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
 fi
 
 # 检查NVIDIA Docker支持
@@ -35,11 +35,11 @@ if ! docker info | grep -q nvidia; then
     
     # 安装nvidia-docker2
     distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
+    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
     
-    sudo apt-get update && sudo apt-get install -y nvidia-docker2
-    sudo systemctl restart docker
+    apt-get update && apt-get install -y nvidia-docker2
+    systemctl restart docker
     
     echo "✅ NVIDIA Docker支持已安装"
 fi
