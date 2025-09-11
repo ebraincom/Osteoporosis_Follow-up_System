@@ -2,8 +2,12 @@ import request from '@/utils/request'
 import type { LoginForm, RegisterForm, AuthResponse, User } from '@/types/user'
 
 export const authApi = {
-  login: (data: LoginForm): Promise<AuthResponse> => {
-    return request.post('/v1/auth/login', data)
+  login: (data: LoginForm, userType: 'institutional' | 'personal' = 'institutional'): Promise<AuthResponse> => {
+    if (userType === 'personal') {
+      return request.post('/v1/personal-auth/login', data)
+    } else {
+      return request.post('/v1/auth/login', data)
+    }
   },
 
   register: (data: RegisterForm): Promise<AuthResponse> => {
