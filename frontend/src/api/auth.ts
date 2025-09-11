@@ -2,11 +2,19 @@ import request from '@/utils/request'
 import type { LoginForm, RegisterForm, AuthResponse, User } from '@/types/user'
 
 export const authApi = {
-  login: (data: LoginForm, userType: 'institutional' | 'personal' = 'institutional'): Promise<AuthResponse> => {
-    if (userType === 'personal') {
-      return request.post('/v1/personal-auth/login', data)
-    } else {
-      return request.post('/v1/auth/login', data)
+  login: async (data: LoginForm): Promise<AuthResponse> => {
+    // 智能登录：先尝试机构用户登录，失败则尝试个人用户登录
+    try {
+      console.log('尝试机构用户登录...')
+      return await request.post('/v1/auth/login', data)
+    } catch (error: any) {
+      console.log('机构用户登录失败，尝试个人用户登录...')
+      try {
+        return await request.post('/v1/personal-auth/login', data)
+      } catch (personalError: any) {
+        // 如果两个都失败，抛出个人用户的错误（通常更具体）
+        throw personalError
+      }
     }
   },
 
