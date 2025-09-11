@@ -961,8 +961,12 @@ const resetPatientForm = () => {
 
 // 生命周期
 onMounted(async () => {
-  // 初始化时获取患者数据
-  await fetchPatients()
+  // 只对机构用户获取患者数据，个人用户不需要
+  if (userStore.user?.user_type === 'institutional') {
+    await fetchPatients()
+  } else {
+    console.log('个人用户登录，跳过患者数据获取')
+  }
 })
 </script>
 
