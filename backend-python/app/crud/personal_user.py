@@ -13,20 +13,25 @@ def get_personal_user_by_id(db: Session, user_id: int):
 
 def create_personal_user(db: Session, user: PersonalUserCreate):
     """创建个人用户"""
-    hashed_password = get_password_hash(user.password)
-    db_user = PersonalUser(
-        username=user.username,
-        hashed_password=hashed_password,
-        name=user.name,
-        phone=user.phone,
-        age=user.age,
-        gender=user.gender,
-        institution=user.institution
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+    try:
+        hashed_password = get_password_hash(user.password)
+        db_user = PersonalUser(
+            username=user.username,
+            hashed_password=hashed_password,
+            name=user.name,
+            phone=user.phone,
+            age=user.age,
+            gender=user.gender,
+            institution=user.institution
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except Exception as e:
+        db.rollback()
+        print(f"创建个人用户数据库错误: {str(e)}")
+        raise e
 
 def update_personal_user(db: Session, user_id: int, user_update):
     """更新个人用户信息"""

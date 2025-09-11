@@ -17,16 +17,23 @@ router = APIRouter()
 @router.post("/register", response_model=PersonalUserLoginResponse)
 def register_personal_user(user: PersonalUserCreate, db: Session = Depends(get_db)):
     """个人用户注册"""
-    # 检查个人用户表中是否已存在
-    db_personal_user = get_personal_user_by_username(db, username=user.username)
-    if db_personal_user:
+    try:
+        # 检查个人用户表中是否已存在
+        db_personal_user = get_personal_user_by_username(db, username=user.username)
+        if db_personal_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="用户名已存在"
+            )
+        
+        # 创建新个人用户
+        new_user = create_personal_user(db=db, user=user)
+    except Exception as e:
+        print(f"个人用户注册错误: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="用户名已存在"
+            detail=f"注册失败: {str(e)}"
         )
-    
-    # 创建新个人用户
-    new_user = create_personal_user(db=db, user=user)
     
     # 创建访问令牌
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
