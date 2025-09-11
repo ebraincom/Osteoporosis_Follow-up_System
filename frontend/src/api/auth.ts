@@ -33,7 +33,8 @@ export const authApi = {
       }
       
       if (restData.gender !== undefined && restData.gender !== null) {
-        personalData.gender = restData.gender
+        // 转换中文性别为英文
+        personalData.gender = restData.gender === '男' ? 'male' : 'female'
       }
       
       if (restData.institution !== undefined && restData.institution !== '') {
