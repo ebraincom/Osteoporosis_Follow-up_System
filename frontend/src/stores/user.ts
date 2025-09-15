@@ -38,10 +38,10 @@ export const useUserStore = defineStore('user', () => {
     isInitialized.value = true
   }
 
-  const login = async (loginForm: LoginForm) => {
+  const login = async (loginForm: LoginForm, userType: 'institutional' | 'personal' = 'institutional') => {
     try {
       loading.value = true
-      const response = await authApi.login(loginForm)
+      const response = await authApi.login(loginForm, userType)
       console.log('登录响应:', response)
       
       // 确保token字段存在

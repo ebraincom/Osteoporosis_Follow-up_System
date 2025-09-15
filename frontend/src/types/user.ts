@@ -19,6 +19,7 @@ export interface User {
 export interface LoginForm {
   username: string
   password: string
+  userType?: 'institutional' | 'personal'
 }
 
 export interface RegisterForm {

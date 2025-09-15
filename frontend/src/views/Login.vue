@@ -15,6 +15,14 @@
           class="login-form"
           @submit.prevent="handleLogin"
         >
+          <!-- 用户类型选择 -->
+          <el-form-item>
+            <el-radio-group v-model="loginForm.userType" class="user-type-group">
+              <el-radio label="institutional">医生/机构用户</el-radio>
+              <el-radio label="personal">患者/个人用户</el-radio>
+            </el-radio-group>
+          </el-form-item>
+
           <el-form-item prop="username">
             <el-input
               v-model="loginForm.username"
@@ -90,7 +98,8 @@ const rememberMe = ref(false)
 
 const loginForm = reactive<LoginForm>({
   username: '',
-  password: ''
+  password: '',
+  userType: 'institutional' // 默认选择机构用户
 })
 
 const loginRules: FormRules = {
@@ -111,7 +120,7 @@ const handleLogin = async () => {
     await loginFormRef.value.validate()
     loading.value = true
 
-    const result = await userStore.login(loginForm)
+    const result = await userStore.login(loginForm, loginForm.userType)
     
     if (result.success) {
       ElMessage.success('登录成功')
@@ -198,6 +207,13 @@ const handleLogin = async () => {
   width: 100%;
   height: 48px;
   font-size: 1.1rem;
+}
+
+.user-type-group {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
 }
 
 .login-footer {

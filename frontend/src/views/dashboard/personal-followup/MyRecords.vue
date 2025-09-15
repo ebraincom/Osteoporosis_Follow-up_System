@@ -178,7 +178,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import { getMyFollowupRecords } from '@/api/followup'
+import { followupApi } from '@/api/followup'
 
 // 类型定义
 interface FollowupRecord {
@@ -345,7 +345,7 @@ const fetchRecords = async () => {
       limit: pageSize.value
     }
     
-    const response = await getMyFollowupRecords(params)
+    const response = await followupApi.getMyFollowups(params)
     console.log('API响应:', response)
     console.log('响应类型:', typeof response)
     console.log('响应长度:', Array.isArray(response) ? response.length : 0)

@@ -40,6 +40,7 @@ class PersonalUserUpdate(BaseModel):
 # 个人用户响应
 class PersonalUser(PersonalUserBase):
     id: int
+    user_type: str = "personal"  # 添加用户类型字段
     is_active: bool
     is_verified: bool
     avatar: Optional[str] = None
