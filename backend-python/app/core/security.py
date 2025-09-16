@@ -105,12 +105,22 @@ def get_current_user_dependency(token: str = Depends(oauth2_scheme), db: Session
         raise credentials_exception
     
     # 避免循环导入，直接在这里查询用户
+    # 首先尝试查询机构用户表
     from app.models.user import User
     user = db.query(User).filter(User.username == username).first()
-    if user is None:
-        logger.error(f"用户不存在: {username}")
-        raise credentials_exception
     
-    logger.info(f"用户验证成功: {user.username}, ID: {user.id}")
-    logger.info(f"=== Token验证完成 ===")
-    return user 
+    if user is None:
+        # 如果机构用户表中没有，尝试查询个人用户表
+        from app.models.personal_user import PersonalUser
+        personal_user = db.query(PersonalUser).filter(PersonalUser.username == username).first()
+        if personal_user is None:
+            logger.error(f"用户不存在: {username}")
+            raise credentials_exception
+        else:
+            logger.info(f"个人用户验证成功: {personal_user.username}, ID: {personal_user.id}")
+            logger.info(f"=== Token验证完成 ===")
+            return personal_user
+    else:
+        logger.info(f"机构用户验证成功: {user.username}, ID: {user.id}")
+        logger.info(f"=== Token验证完成 ===")
+        return user 

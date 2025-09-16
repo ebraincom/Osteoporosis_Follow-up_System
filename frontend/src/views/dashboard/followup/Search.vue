@@ -852,7 +852,14 @@ const getLevelText = (level: string | undefined) => {
 // 生命周期
 onMounted(async () => {
   console.log('Search.vue: 组件已挂载')
-  await fetchPatients()
+  console.log('当前用户类型:', userStore.user?.user_type)
+  
+  // 只对机构用户获取患者列表，个人用户不需要
+  if (userStore.user?.user_type === 'institutional') {
+    await fetchPatients()
+  } else {
+    console.log('个人用户登录，跳过患者列表获取')
+  }
 })
 </script>
 

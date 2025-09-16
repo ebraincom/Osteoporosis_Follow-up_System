@@ -16,6 +16,11 @@ def get_patient_by_patient_id(db: Session, patient_id: str) -> Optional[Patient]
     return db.query(Patient).filter(Patient.patient_id == patient_id).first()
 
 
+def get_patient_by_user_id(db: Session, user_id: int) -> Optional[Patient]:
+    """根据用户ID获取患者信息"""
+    return db.query(Patient).filter(Patient.user_id == user_id).first()
+
+
 def get_patients(
     db: Session, 
     skip: int = 0, 
@@ -92,6 +97,11 @@ def get_patients_by_risk_level(db: Session, risk_level: str, user_id: Optional[i
     if user_id:
         query = query.filter(Patient.user_id == user_id)
     return query.all()
+
+
+def get_patients_by_name(db: Session, name: str, limit: int = 100) -> List[Patient]:
+    """根据患者姓名获取患者列表（支持多个档案编号）"""
+    return db.query(Patient).filter(Patient.name == name).limit(limit).all()
 
 
 def get_patients_count(

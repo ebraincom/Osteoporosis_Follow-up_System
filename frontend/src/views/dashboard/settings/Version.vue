@@ -21,11 +21,11 @@
             </div>
             <div class="info-item">
               <span class="label">发布日期:</span>
-              <span class="value">2025-09-07</span>
+              <span class="value">2025-09-10</span>
             </div>
             <div class="info-item">
               <span class="label">构建编号:</span>
-              <span class="value">Build-20250907-001</span>
+              <span class="value">Build-20250910-001</span>
             </div>
             <div class="info-item">
               <span class="label">系统运行时间:</span>
@@ -46,35 +46,6 @@
           </div>
         </div>
 
-        <div class="detail-section">
-          <h4>技术栈</h4>
-          <div class="tech-stack">
-            <div class="tech-item">
-              <span class="tech-label">前端框架:</span>
-              <span class="tech-value">Vue 3.4.0</span>
-            </div>
-            <div class="tech-item">
-              <span class="tech-label">UI组件库:</span>
-              <span class="tech-value">Element Plus 2.4.0</span>
-            </div>
-            <div class="tech-item">
-              <span class="tech-label">构建工具:</span>
-              <span class="tech-value">Vite 5.0.0</span>
-            </div>
-            <div class="tech-item">
-              <span class="tech-label">后端框架:</span>
-              <span class="tech-value">FastAPI 0.104.0</span>
-            </div>
-            <div class="tech-item">
-              <span class="tech-label">数据库:</span>
-              <span class="tech-value">SQLite 3.45.0</span>
-            </div>
-            <div class="tech-item">
-              <span class="tech-label">Python版本:</span>
-              <span class="tech-value">Python 3.11.0</span>
-            </div>
-          </div>
-        </div>
 
         <div class="detail-section">
           <h4>更新日志</h4>
@@ -82,29 +53,31 @@
             <div class="changelog-item">
               <div class="changelog-header">
                 <span class="version-tag">v1.0.0</span>
-                <span class="release-date">2025-01-20</span>
+                <span class="release-date">2025-09-10</span>
               </div>
               <div class="changelog-content">
                 <h5>新功能</h5>
                 <ul>
-                  <li>用户注册和登录系统</li>
-                  <li>患者信息管理</li>
-                  <li>骨密度数据录入和追踪</li>
-                  <li>AI辅助诊断功能</li>
-                  <li>数据采集模块</li>
-                  <li>隐私条款和设置管理</li>
+                  <li>双用户体系：支持机构用户和个人用户</li>
+                  <li>智能随访系统：自动生成随访计划和提醒</li>
+                  <li>AI健康分析：智能风险评估和健康建议</li>
+                  <li>数据采集模块：多源健康数据录入</li>
+                  <li>个人信息管理：完整的用户档案系统</li>
+                  <li>隐私保护：严格的数据安全和隐私保护</li>
                 </ul>
                 <h5>优化</h5>
                 <ul>
-                  <li>界面响应式设计优化</li>
-                  <li>数据加载性能提升</li>
-                  <li>用户体验改进</li>
+                  <li>界面响应式设计，支持多端访问</li>
+                  <li>系统性能优化，提升用户体验</li>
+                  <li>数据加载速度优化</li>
+                  <li>用户界面交互优化</li>
                 </ul>
                 <h5>修复</h5>
                 <ul>
-                  <li>修复登录状态保持问题</li>
-                  <li>修复数据验证错误</li>
-                  <li>修复界面显示异常</li>
+                  <li>修复个人用户认证问题</li>
+                  <li>修复随访记录获取异常</li>
+                  <li>修复个人信息提交验证问题</li>
+                  <li>修复系统部署相关问题</li>
                 </ul>
               </div>
             </div>
@@ -115,24 +88,7 @@
           <h4>开发团队</h4>
           <div class="team-info">
             <div class="team-item">
-              <span class="team-label">产品经理:</span>
-              <span class="team-value">张医生</span>
-            </div>
-            <div class="team-item">
-              <span class="team-label">技术负责人:</span>
-              <span class="team-value">李工程师</span>
-            </div>
-            <div class="team-item">
-              <span class="team-label">前端开发:</span>
-              <span class="team-value">王开发</span>
-            </div>
-            <div class="team-item">
-              <span class="team-label">后端开发:</span>
-              <span class="team-value">陈开发</span>
-            </div>
-            <div class="team-item">
-              <span class="team-label">测试工程师:</span>
-              <span class="team-value">刘测试</span>
+              <span class="team-value">北京智芸数据科技有限公司</span>
             </div>
           </div>
         </div>
@@ -142,15 +98,15 @@
           <div class="contact-info">
             <div class="contact-item">
               <span class="contact-label">技术支持:</span>
-              <span class="contact-value">support@osteoporosis-system.com</span>
+              <span class="contact-value">ebraincom988@gmail.com</span>
             </div>
             <div class="contact-item">
               <span class="contact-label">产品反馈:</span>
-              <span class="contact-value">feedback@osteoporosis-system.com</span>
+              <span class="contact-value">ebraincom988@gmail.com</span>
             </div>
             <div class="contact-item">
               <span class="contact-label">紧急联系:</span>
-              <span class="contact-value">400-123-4567</span>
+              <span class="contact-value">13332093776</span>
             </div>
           </div>
         </div>
@@ -175,7 +131,7 @@ const systemStatus = ref({
 
 // 计算系统运行时间
 const calculateUptime = () => {
-  const startTime = new Date('2025-09-07T18:00:00Z') // 假设系统启动时间
+  const startTime = new Date('2025-09-10T10:00:00Z') // 假设系统启动时间
   const now = new Date()
   const diff = now.getTime() - startTime.getTime()
   
@@ -300,31 +256,6 @@ onUnmounted(() => {
   color: #666;
 }
 
-.tech-stack {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.tech-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f0f8ff;
-  border-radius: 4px;
-  border-left: 3px solid #667eea;
-}
-
-.tech-label {
-  font-weight: 600;
-  color: #333;
-}
-
-.tech-value {
-  color: #667eea;
-  font-weight: 500;
-}
 
 .changelog {
   display: flex;
@@ -383,27 +314,25 @@ onUnmounted(() => {
 }
 
 .team-info {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .team-item {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 8px 12px;
+  padding: 15px 20px;
   background: #f8f9fa;
-  border-radius: 4px;
-}
-
-.team-label {
-  font-weight: 600;
-  color: #333;
+  border-radius: 6px;
+  border-left: 4px solid #667eea;
 }
 
 .team-value {
-  color: #666;
+  color: #333;
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 .contact-info {

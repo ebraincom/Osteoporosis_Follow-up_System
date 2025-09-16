@@ -274,3 +274,107 @@ def get_pending_followup_responses_for_patients(
         pending_list.append(pending_dict)
     
     return pending_list
+
+
+def get_followup_responses_by_patient_name(
+    db: Session,
+    patient_name: str,
+    skip: int = 0,
+    limit: int = 100,
+    followup_id: Optional[int] = None,
+    is_completed: Optional[bool] = None
+) -> List[FollowupResponse]:
+    """根据患者姓名获取随访应答列表（支持多个档案编号）"""
+    query = db.query(FollowupResponse).join(
+        Patient, FollowupResponse.patient_id == Patient.id
+    ).filter(Patient.name == patient_name)
+    
+    if followup_id is not None:
+        query = query.filter(FollowupResponse.followup_id == followup_id)
+    
+    if is_completed is not None:
+        query = query.filter(FollowupResponse.is_completed == is_completed)
+    
+    return query.offset(skip).limit(limit).all()
+
+
+def get_followup_responses_count_by_patient_name(
+    db: Session,
+    patient_name: str,
+    followup_id: Optional[int] = None,
+    is_completed: Optional[bool] = None
+) -> int:
+    """根据患者姓名获取随访应答总数（支持多个档案编号）"""
+    query = db.query(FollowupResponse).join(
+        Patient, FollowupResponse.patient_id == Patient.id
+    ).filter(Patient.name == patient_name)
+    
+    if followup_id is not None:
+        query = query.filter(FollowupResponse.followup_id == followup_id)
+    
+    if is_completed is not None:
+        query = query.filter(FollowupResponse.is_completed == is_completed)
+    
+    return query.count()
+
+
+def get_followup_responses_with_patient_info_by_name(
+    db: Session,
+    patient_name: str,
+    skip: int = 0,
+    limit: int = 100,
+    is_completed: Optional[bool] = None
+) -> List[Dict[str, Any]]:
+    """根据患者姓名获取包含患者信息的随访应答列表（支持多个档案编号）"""
+    query = db.query(
+        FollowupResponse,
+        Patient.name.label('patient_name'),
+        Patient.patient_id.label('patient_patient_id'),
+        Patient.phone.label('patient_phone'),
+        FollowupRecord.time.label('followup_time'),
+        FollowupRecord.details.label('followup_details')
+    ).join(
+        Patient, FollowupResponse.patient_id == Patient.id
+    ).join(
+        FollowupRecord, FollowupResponse.followup_id == FollowupRecord.id
+    ).filter(Patient.name == patient_name)
+    
+    if is_completed is not None:
+        query = query.filter(FollowupResponse.is_completed == is_completed)
+    
+    results = query.offset(skip).limit(limit).all()
+    
+    # 转换为字典格式
+    response_list = []
+    for result in results:
+        response_dict = {
+            'id': result.FollowupResponse.id,
+            'followup_id': result.FollowupResponse.followup_id,
+            'patient_id': result.FollowupResponse.patient_id,
+            'response_time': result.FollowupResponse.response_time,
+            'is_completed': result.FollowupResponse.is_completed,
+            'overall_feeling': result.FollowupResponse.overall_feeling,
+            'improvement_level': result.FollowupResponse.improvement_level,
+            'medication_adherence': result.FollowupResponse.medication_adherence,
+            'exercise_volume': result.FollowupResponse.exercise_volume,
+            'diet_adjustment': result.FollowupResponse.diet_adjustment,
+            'pain_level': result.FollowupResponse.pain_level,
+            'sleep_quality': result.FollowupResponse.sleep_quality,
+            'daily_activity': result.FollowupResponse.daily_activity,
+            'mood_status': result.FollowupResponse.mood_status,
+            'social_activity': result.FollowupResponse.social_activity,
+            'side_effects': result.FollowupResponse.side_effects,
+            'concerns': result.FollowupResponse.concerns,
+            'suggestions': result.FollowupResponse.suggestions,
+            'additional_info': result.FollowupResponse.additional_info,
+            'created_at': result.FollowupResponse.created_at,
+            'updated_at': result.FollowupResponse.updated_at,
+            'patient_name': result.patient_name,
+            'patient_patient_id': result.patient_patient_id,  # 档案编号
+            'patient_phone': result.patient_phone,
+            'followup_time': result.followup_time,
+            'followup_details': result.followup_details
+        }
+        response_list.append(response_dict)
+    
+    return response_list

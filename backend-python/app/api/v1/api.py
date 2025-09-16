@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, users, patients, reports, analytics, followups, followup_responses, personal_auth, ai_qa, voice_interaction
+from app.api.v1.endpoints import auth, users, patients, reports, analytics, followups, followup_responses, personal_auth, ai_qa, voice_interaction, reminders
 
 api_router = APIRouter()
 
@@ -14,4 +14,5 @@ api_router.include_router(followups.router, prefix="/followups", tags=["随访�
 api_router.include_router(followup_responses.router, prefix="/followup-responses", tags=["随访应答"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["数据分析"])
 api_router.include_router(ai_qa.router, prefix="/ai-qa", tags=["AI问答"])
-api_router.include_router(voice_interaction.router, prefix="/voice", tags=["语音交互"]) 
+api_router.include_router(voice_interaction.router, prefix="/voice", tags=["语音交互"])
+api_router.include_router(reminders.router, prefix="/reminders", tags=["提醒管理"]) 

@@ -47,7 +47,7 @@ export const followupApi = {
 
   // 获取我的随访记录
   getMyFollowups: (params?: { skip?: number; limit?: number }) => {
-    return request.get('/v1/followups/user/me', { params })
+    return request.get('/v1/followups/my-records', { params })
   },
 
   // 获取单个随访记录

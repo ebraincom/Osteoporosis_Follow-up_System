@@ -11,6 +11,17 @@ class PersonalUserBase(BaseModel):
     age: Optional[int] = None
     gender: Optional[Gender] = None
     institution: Optional[str] = None
+    # 添加更多字段
+    email: Optional[str] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    t_score: Optional[float] = None
+    z_score: Optional[float] = None
+    risk_level: Optional[str] = None
+    address: Optional[str] = None
+    medical_history: Optional[str] = None
+    family_history: Optional[str] = None
+    medications: Optional[str] = None
 
 # 创建个人用户
 class PersonalUserCreate(PersonalUserBase):
@@ -36,6 +47,17 @@ class PersonalUserUpdate(BaseModel):
     gender: Optional[Gender] = None
     institution: Optional[str] = None
     avatar: Optional[str] = None
+    # 添加更多字段支持
+    email: Optional[str] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    t_score: Optional[float] = None
+    z_score: Optional[float] = None
+    risk_level: Optional[str] = None
+    address: Optional[str] = None
+    medical_history: Optional[str] = None
+    family_history: Optional[str] = None
+    medications: Optional[str] = None
 
 # 个人用户响应
 class PersonalUser(PersonalUserBase):

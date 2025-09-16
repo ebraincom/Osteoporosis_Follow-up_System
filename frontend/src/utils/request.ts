@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 
 const request = axios.create({
-  baseURL: '/api',  // 明确指定API路径，让Vite代理处理
+  baseURL: '',  // 直接使用相对路径，因为后端已经在/v1路径下
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

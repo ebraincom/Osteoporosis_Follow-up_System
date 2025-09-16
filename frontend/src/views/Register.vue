@@ -55,7 +55,7 @@
               />
             </el-form-item>
 
-            <el-form-item prop="age">
+            <el-form-item prop="age" :required="true">
               <el-input
                 v-model="registerForm.age"
                 placeholder="请输入年龄"
@@ -66,7 +66,7 @@
               />
             </el-form-item>
 
-            <el-form-item prop="gender">
+            <el-form-item prop="gender" :required="true">
               <el-select
                 v-model="registerForm.gender"
                 placeholder="请选择性别"
@@ -236,7 +236,7 @@ const registerRules: FormRules = {
   age: [
     {
       validator: (rule, value, callback) => {
-        if (registerForm.userType === 'personal' && !value) {
+        if (registerForm.userType === 'personal' && (value === undefined || value === null || value === '')) {
           callback(new Error('请输入年龄'))
         } else {
           callback()
@@ -263,10 +263,17 @@ const handleRegister = async () => {
   if (!registerFormRef.value) return
 
   try {
+    console.log('=== 注册表单验证开始 ===')
+    console.log('表单数据:', registerForm)
+    console.log('用户类型:', registerForm.userType)
+    
     await registerFormRef.value.validate()
+    console.log('表单验证通过')
+    
     loading.value = true
 
     const result = await userStore.register(registerForm)
+    console.log('注册结果:', result)
     
     if (result.success) {
       ElMessage.success('注册成功')
@@ -276,6 +283,11 @@ const handleRegister = async () => {
     }
   } catch (error) {
     console.error('注册错误:', error)
+    console.log('错误详情:', {
+      error,
+      formData: registerForm,
+      userType: registerForm.userType
+    })
     ElMessage.error('注册失败，请检查输入信息')
   } finally {
     loading.value = false

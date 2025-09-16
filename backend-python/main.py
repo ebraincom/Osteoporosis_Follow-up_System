@@ -46,7 +46,7 @@ app.add_middleware(
 # 修复TrustedHostMiddleware配置 - 使用主机名而不是URL
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"]
+    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0", "117.50.198.126", "*"]
 )
 
 # 请求日志中间件
@@ -83,7 +83,7 @@ async def health_check():
     }
 
 # 包含API路由
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/v1")
 
 # 启动事件
 @app.on_event("startup")

@@ -30,10 +30,12 @@ class Settings(BaseSettings):
     
     # CORS配置
     ALLOWED_HOSTS: List[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8080",
-        "http://127.0.0.1:8080"
+        "117.50.198.126",
+        "http://117.50.198.126:3000",
+        "http://117.50.198.126:8000",
+        "localhost",
+        "127.0.0.1",
+        "*"
     ]
     
     # 文件上传配置

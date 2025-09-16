@@ -101,13 +101,13 @@
             <div class="contact-grid">
               <div class="contact-item">
                 <h4>技术支持</h4>
-                <p>邮箱：support@osteoporosis-system.com</p>
-                <p>电话：400-123-4567</p>
+                <p>邮箱：ebraincom988@gmail.com</p>
+                <p>电话：13332093776</p>
                 <p>工作时间：周一至周五 9:00-18:00</p>
               </div>
               <div class="contact-item">
                 <h4>产品反馈</h4>
-                <p>邮箱：feedback@osteoporosis-system.com</p>
+                <p>邮箱：ebraincom988@gmail.com</p>
                 <p>在线反馈：系统内"意见反馈"功能</p>
                 <p>响应时间：24小时内</p>
               </div>

@@ -898,7 +898,14 @@ const deleteFollowupRecord = async (record: any) => {
 
 onMounted(async () => {
   console.log('组件挂载，开始获取患者数据...')
-  await fetchPatients()
+  console.log('当前用户类型:', userStore.user?.user_type)
+  
+  // 只对机构用户获取患者列表，个人用户不需要
+  if (userStore.user?.user_type === 'institutional') {
+    await fetchPatients()
+  } else {
+    console.log('个人用户登录，跳过患者列表获取')
+  }
 })
 </script>
 

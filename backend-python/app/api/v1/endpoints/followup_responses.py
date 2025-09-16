@@ -16,6 +16,16 @@ from app.models.user import User
 router = APIRouter()
 
 
+def get_user_type(current_user: User) -> str:
+    """获取用户类型"""
+    if hasattr(current_user, 'user_type'):
+        return current_user.user_type.lower()
+    elif hasattr(current_user, '__class__') and 'PersonalUser' in str(current_user.__class__):
+        return 'personal'
+    else:
+        return 'institutional'
+
+
 @router.post("/", response_model=FollowupResponse)
 def create_followup_response(
     response_data: FollowupResponseCreate,
@@ -24,7 +34,7 @@ def create_followup_response(
 ):
     """创建随访应答"""
     # 个人用户只能为自己创建应答
-    if current_user.user_type == "personal":
+    if get_user_type(current_user) == "personal":
         # 根据followup_id找到对应的随访记录，获取patient_id
         from app.crud import followup as followup_crud
         followup = followup_crud.get_followup_record(db, followup_id=response_data.followup_id)
@@ -68,7 +78,7 @@ def get_followup_responses(
 ):
     """获取随访应答列表"""
     # 根据用户类型决定查询范围
-    if current_user.user_type == "institutional":
+    if get_user_type(current_user) == "institutional":
         # 机构用户可以看到所有患者的应答
         responses = response_crud.get_followup_responses(
             db=db,
@@ -86,17 +96,18 @@ def get_followup_responses(
         )
     else:
         # 个人用户只能看到自己的应答
-        responses = response_crud.get_followup_responses(
+        # 根据患者姓名查询所有档案编号的随访回复
+        responses = response_crud.get_followup_responses_by_patient_name(
             db=db,
+            patient_name=current_user.name,
             skip=skip,
             limit=limit,
-            patient_id=current_user.id,  # 使用当前用户ID作为patient_id
             followup_id=followup_id,
             is_completed=is_completed
         )
-        total = response_crud.get_followup_responses_count(
+        total = response_crud.get_followup_responses_count_by_patient_name(
             db=db,
-            patient_id=current_user.id,
+            patient_name=current_user.name,
             followup_id=followup_id,
             is_completed=is_completed
         )
@@ -120,7 +131,7 @@ def get_followup_responses_with_patient_info(
     current_user: User = Depends(get_current_user_dependency)
 ):
     """获取包含患者信息的随访应答列表（机构用户专用）"""
-    if current_user.user_type != "institutional":
+    if get_user_type(current_user) != "institutional":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="只有机构用户才能查看患者信息"
@@ -145,15 +156,20 @@ def get_pending_followup_responses(
     current_user: User = Depends(get_current_user_dependency)
 ):
     """获取待回复的随访记录（个人用户专用）"""
-    if current_user.user_type != "personal":
+    # 检查用户类型
+    user_type = getattr(current_user, 'user_type', 'personal')
+    if hasattr(current_user, '__class__') and 'PersonalUser' in str(current_user.__class__):
+        user_type = 'personal'
+    
+    if user_type != "personal":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="只有个人用户才能查看待回复的随访记录"
         )
     
-    # 获取个人用户对应的患者记录
+    # 获取个人用户对应的患者记录（按姓名查询，支持多个档案编号）
     from app.crud import patient as patient_crud
-    patients = patient_crud.get_patients(db, user_id=current_user.id, limit=1000)
+    patients = patient_crud.get_patients_by_name(db, current_user.name, limit=1000)
     
     if not patients:
         return []
@@ -186,7 +202,7 @@ def get_followup_response(
         )
     
     # 检查权限
-    if current_user.user_type == "personal" and response.patient_id != current_user.id:
+    if get_user_type(current_user) == "personal" and response.patient_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="没有权限查看此随访应答"
@@ -212,7 +228,7 @@ def update_followup_response(
         )
     
     # 检查权限
-    if current_user.user_type == "personal" and existing_response.patient_id != current_user.id:
+    if get_user_type(current_user) == "personal" and existing_response.patient_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="没有权限修改此随访应答"
@@ -244,7 +260,7 @@ def delete_followup_response(
         )
     
     # 检查权限
-    if current_user.user_type == "personal" and existing_response.patient_id != current_user.id:
+    if get_user_type(current_user) == "personal" and existing_response.patient_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="没有权限删除此随访应答"
@@ -270,7 +286,7 @@ def get_patient_followup_responses(
 ):
     """获取指定患者的随访应答列表"""
     # 检查权限
-    if current_user.user_type == "personal":
+    if get_user_type(current_user) == "personal":
         # 个人用户只能查看自己的患者记录的随访应答
         from app.crud import patient as patient_crud
         patient = patient_crud.get_patient(db, patient_id=patient_id)

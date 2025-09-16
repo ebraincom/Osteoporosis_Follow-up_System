@@ -48,51 +48,6 @@ def get_my_followup_records(
     return followup_crud.get_user_followup_records(db, current_user.id, skip, limit)
 
 
-@router.get("/my-records", response_model=List[Dict[str, Any]])
-def get_my_patient_followup_records(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_dependency)
-):
-    """获取个人用户作为患者的随访记录列表"""
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    logger.info(f"=== my-records端点开始 ===")
-    logger.info(f"当前用户: {current_user.username}, ID: {current_user.id}, 类型: {current_user.user_type}")
-    logger.info(f"查询参数: skip={skip}, limit={limit}")
-    
-    # 个人用户需要获取与自己相关的所有随访记录
-    # 通过患者姓名匹配来查找
-    try:
-        results = followup_crud.get_patient_followup_records_by_name(
-            db, 
-            patient_name=current_user.name, 
-            skip=skip, 
-            limit=limit
-        )
-        
-        logger.info(f"查询结果类型: {type(results)}")
-        logger.info(f"查询结果: {results}")
-        
-        if results:
-            logger.info(f"找到 {len(results)} 条随访记录")
-        else:
-            logger.info("没有找到随访记录")
-            
-        return results
-        
-    except Exception as e:
-        logger.error(f"查询随访记录时出错: {e}")
-        import traceback
-        logger.error(f"错误详情: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"查询随访记录失败: {str(e)}"
-        )
-
-
 @router.get("/all", response_model=List[FollowupRecord])
 def get_all_followup_records(
     skip: int = 0,
@@ -109,6 +64,18 @@ def get_all_followup_records(
         )
     
     return followup_crud.get_all_followup_records(db, skip, limit)
+
+
+@router.get("/my-records")
+def get_my_patient_followup_records(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """获取个人用户作为患者的随访记录列表"""
+    # 获取个人用户的随访记录
+    return followup_crud.get_patient_followup_records_by_name(db, current_user.name, skip, limit)
 
 
 @router.get("/{followup_id}", response_model=FollowupRecord)

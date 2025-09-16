@@ -21,7 +21,11 @@ def get_patients(
 ):
     """获取患者列表"""
     # 根据用户类型决定查询范围
-    if current_user.user_type == UserType.INSTITUTIONAL:
+    user_type = getattr(current_user, 'user_type', 'personal')
+    if hasattr(current_user, '__class__') and 'PersonalUser' in str(current_user.__class__):
+        user_type = 'personal'
+    
+    if user_type == 'institutional':
         # 机构客户（医生）可以查看所有患者信息
         patients = patient_crud.get_all_patients(
             db=db,

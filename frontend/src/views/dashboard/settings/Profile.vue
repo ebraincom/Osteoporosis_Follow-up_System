@@ -60,28 +60,28 @@
 
           <el-form-item label="性别" prop="gender">
             <div class="form-item-content">
-              <span class="form-value">{{ profileForm.gender === 'male' ? '男' : '女' }}</span>
+              <span class="form-value">{{ profileForm.gender ? (profileForm.gender === 'male' ? '男' : '女') : '未设置' }}</span>
               <el-button type="primary" size="small" @click="editField('gender')">修改</el-button>
             </div>
           </el-form-item>
 
           <el-form-item label="生日" prop="birthday">
             <div class="form-item-content">
-              <span class="form-value">{{ profileForm.birthday }} ({{ profileForm.age }}岁)</span>
+              <span class="form-value">{{ profileForm.birthday || '未设置' }} {{ profileForm.age ? `(${profileForm.age}岁)` : '' }}</span>
               <el-button type="primary" size="small" @click="editField('birthday')">修改</el-button>
             </div>
           </el-form-item>
 
           <el-form-item label="绑定手机" prop="phone">
             <div class="form-item-content">
-              <span class="form-value">{{ maskPhone(profileForm.phone) }}</span>
+              <span class="form-value">{{ profileForm.phone ? maskPhone(profileForm.phone) : '未设置' }}</span>
               <el-button type="primary" size="small" @click="editField('phone')">修改</el-button>
             </div>
           </el-form-item>
 
           <el-form-item label="登录邮箱" prop="email">
             <div class="form-item-content">
-              <span class="form-value">{{ profileForm.email }}</span>
+              <span class="form-value">{{ profileForm.email || '未设置' }}</span>
               <el-button type="primary" size="small" @click="editField('email')">修改</el-button>
             </div>
           </el-form-item>
@@ -209,7 +209,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { User, Camera } from '@element-plus/icons-vue'
-import { updateUserAvatar, getCurrentUser } from '@/api/user'
+import { updateUserAvatar, getCurrentUser, updateCurrentUser } from '@/api/user'
 
 const userStore = useUserStore()
 
@@ -225,17 +225,17 @@ const cropImageSrc = ref('')
 
 // 个人信息表单数据
 const profileForm = reactive({
-  name: userStore.user?.name || '李文',
-  gender: userStore.user?.gender || 'male',
-  birthday: '1995-08-23',
-  age: 28,
-  phone: userStore.user?.phone || '13800138000',
-  email: userStore.user?.email || 'li.wen@email.com',
+  name: userStore.user?.name || '',
+  gender: userStore.user?.gender || '',
+  birthday: '',
+  age: userStore.user?.age || undefined,
+  phone: userStore.user?.phone || '',
+  email: userStore.user?.email || '',
   password: '',
   userType: userStore.user?.user_type || 'personal',
   institution: userStore.user?.institution || '',
   department: userStore.user?.department || '',
-  createdAt: userStore.user?.created_at || '2024-01-01T00:00:00Z',
+  createdAt: userStore.user?.created_at || '',
   lastLogin: userStore.user?.last_login || new Date().toISOString(),
   avatar: userStore.user?.avatar || ''
 })
@@ -259,11 +259,9 @@ const editForm = reactive({
 const formRules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
   ],
   phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
   ]
 }
@@ -315,20 +313,39 @@ const saveEdit = async () => {
   try {
     await editFormRef.value?.validate()
     
-    // 更新表单数据
-    profileForm[editFieldName.value as keyof typeof profileForm] = editForm[editFieldName.value as keyof typeof editForm]
+    // 准备更新数据
+    const updateData: any = {}
+    updateData[editFieldName.value] = editForm[editFieldName.value as keyof typeof editForm]
     
     // 如果是生日，计算年龄
     if (editFieldName.value === 'birthday') {
       const birthDate = new Date(editForm.birthday)
       const today = new Date()
-      profileForm.age = today.getFullYear() - birthDate.getFullYear()
+      updateData.age = today.getFullYear() - birthDate.getFullYear()
     }
+    
+    console.log('准备更新用户信息:', updateData)
+    
+    // 调用后端API更新用户信息
+    const updatedUser = await updateCurrentUser(updateData)
+    console.log('用户信息更新成功:', updatedUser)
+    
+    // 更新本地表单数据
+    profileForm[editFieldName.value as keyof typeof profileForm] = editForm[editFieldName.value as keyof typeof editForm]
+    
+    // 如果是生日，更新年龄
+    if (editFieldName.value === 'birthday') {
+      profileForm.age = updateData.age
+    }
+    
+    // 更新用户store
+    userStore.setUser(updatedUser)
     
     ElMessage.success('修改成功')
     editDialogVisible.value = false
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('保存失败:', error)
+    ElMessage.error('保存失败，请重试')
   }
 }
 
@@ -431,23 +448,65 @@ const removeAvatar = async () => {
 // 页面加载时获取最新的用户信息
 onMounted(async () => {
   try {
-    const currentUser = await getCurrentUser()
-    // 更新本地表单数据
-    Object.assign(profileForm, {
-      name: currentUser.name,
-      gender: currentUser.gender,
-      phone: currentUser.phone,
-      email: currentUser.email,
-      userType: currentUser.user_type,
-      institution: currentUser.institution,
-      department: currentUser.department,
-      createdAt: currentUser.created_at,
-      lastLogin: currentUser.updated_at || currentUser.created_at,
-      avatar: currentUser.avatar || ''
-    })
+    console.log('Profile页面加载，当前用户信息:', userStore.user)
     
-    // 更新用户store
-    userStore.setUser(currentUser)
+    // 如果有用户信息，直接使用store中的信息
+    if (userStore.user) {
+      console.log('使用store中的用户信息填充表单')
+      Object.assign(profileForm, {
+        name: userStore.user.name || '',
+        gender: userStore.user.gender || '',
+        age: userStore.user.age || undefined,
+        phone: userStore.user.phone || '',
+        email: userStore.user.email || '',
+        userType: userStore.user.user_type || 'personal',
+        institution: userStore.user.institution || '',
+        department: userStore.user.department || '',
+        createdAt: userStore.user.created_at || '',
+        lastLogin: userStore.user.updated_at || userStore.user.created_at || new Date().toISOString(),
+        avatar: userStore.user.avatar || ''
+      })
+      
+      // 如果有年龄，计算生日（简化处理）
+      if (userStore.user.age) {
+        const currentYear = new Date().getFullYear()
+        const birthYear = currentYear - userStore.user.age
+        profileForm.birthday = `${birthYear}-01-01` // 默认1月1日
+      }
+      
+      console.log('表单数据已填充:', profileForm)
+    }
+    
+    // 尝试从后端获取最新信息（作为备用）
+    try {
+      const currentUser = await getCurrentUser()
+      console.log('从后端获取的用户信息:', currentUser)
+      
+      // 只有在后端信息更完整时才更新
+      if (currentUser && (currentUser.phone || currentUser.age || currentUser.gender)) {
+        console.log('使用后端获取的完整用户信息更新表单')
+        Object.assign(profileForm, {
+          name: currentUser.name || profileForm.name,
+          gender: currentUser.gender || profileForm.gender,
+          age: currentUser.age || profileForm.age,
+          phone: currentUser.phone || profileForm.phone,
+          email: currentUser.email || profileForm.email || '', // 个人用户可能没有email
+          userType: currentUser.user_type || profileForm.userType,
+          institution: currentUser.institution || profileForm.institution,
+          department: currentUser.department || profileForm.department,
+          createdAt: currentUser.created_at || profileForm.createdAt,
+          lastLogin: currentUser.updated_at || currentUser.created_at || profileForm.lastLogin,
+          avatar: currentUser.avatar || profileForm.avatar
+        })
+        
+        // 更新用户store
+        userStore.setUser(currentUser)
+      }
+    } catch (apiError) {
+      console.warn('从后端获取用户信息失败，使用本地信息:', apiError)
+    }
+    
+    console.log('Profile表单数据初始化完成:', profileForm)
   } catch (error) {
     console.error('获取用户信息失败:', error)
     ElMessage.error('获取用户信息失败')

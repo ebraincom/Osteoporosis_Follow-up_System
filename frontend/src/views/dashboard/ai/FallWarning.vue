@@ -18,7 +18,7 @@
               <h4>当前状态</h4>
               <div class="safety-status-panel">
                 <div class="status-icon">
-                  <el-icon size="60" color="#409eff"><ShieldCheck /></el-icon>
+                  <el-icon size="60" color="#409eff"><Check /></el-icon>
                 </div>
                 <div class="status-text">安全</div>
               </div>
@@ -28,7 +28,7 @@
             <div class="health-metrics">
               <div class="metric-card">
                 <div class="metric-icon">
-                  <el-icon size="24" color="#409eff"><Footprints /></el-icon>
+                  <el-icon size="24" color="#409eff"><User /></el-icon>
                 </div>
                 <div class="metric-content">
                   <div class="metric-title">今日步数</div>
@@ -38,7 +38,7 @@
               
               <div class="metric-card">
                 <div class="metric-icon">
-                  <el-icon size="24" color="#f56c6c"><Heart /></el-icon>
+                  <el-icon size="24" color="#f56c6c"><Star /></el-icon>
                 </div>
                 <div class="metric-content">
                   <div class="metric-title">今日心率</div>
@@ -48,7 +48,7 @@
               
               <div class="metric-card">
                 <div class="metric-icon">
-                  <el-icon size="24" color="#67c23a"><Temperature /></el-icon>
+                  <el-icon size="24" color="#67c23a"><Setting /></el-icon>
                 </div>
                 <div class="metric-content">
                   <div class="metric-title">今日血压</div>
@@ -109,10 +109,10 @@
 import { ref } from 'vue'
 import { 
   Monitor, 
-  ShieldCheck, 
-  Footprints, 
-  Heart, 
-  Temperature, 
+  Check, 
+  User, 
+  Star, 
+  Setting, 
   Lightning, 
   Warning,
   Bell
@@ -131,7 +131,7 @@ const warningHistory = ref([
   {
     id: 2,
     type: 'info',
-    icon: 'ShieldCheck',
+    icon: 'Check',
     title: '设备连接正常',
     time: '2025-01-20 12:00',
     description: '监测设备连接状态良好，数据正常传输'
@@ -139,7 +139,7 @@ const warningHistory = ref([
   {
     id: 3,
     type: 'success',
-    icon: 'ShieldCheck',
+    icon: 'Check',
     title: '安全状态确认',
     time: '2025-01-20 10:15',
     description: '所有健康指标正常，安全状态良好'

@@ -2,7 +2,7 @@ export interface User {
   id: number
   username: string
   name: string
-  email: string
+  email?: string  // 改为可选，因为个人用户没有email字段
   phone?: string
   user_type: 'institutional' | 'personal'
   institution?: string
@@ -14,12 +14,21 @@ export interface User {
   updated_at?: string
   is_active: boolean
   is_verified: boolean
+  // 添加更多字段
+  height?: number
+  weight?: number
+  t_score?: number
+  z_score?: number
+  risk_level?: string
+  address?: string
+  medical_history?: string
+  family_history?: string
+  medications?: string
 }
 
 export interface LoginForm {
   username: string
   password: string
-  userType?: 'institutional' | 'personal'
 }
 
 export interface RegisterForm {

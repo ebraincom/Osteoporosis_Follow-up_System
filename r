@@ -8,9 +8,9 @@ try:
     from app.core.config_simple import settings
 except ImportError:
     from app.core.config_simple import settings
-from app.schemas.personal_user import PersonalUserCreate, PersonalUser, PersonalUserLogin, PersonalUserLoginResponse, PersonalUserUpdate
-from app.crud.personal_user import get_personal_user_by_username, create_personal_user, update_personal_user
-from app.core.security import verify_password, get_current_user_dependency
+from app.schemas.personal_user import PersonalUserCreate, PersonalUser, PersonalUserLogin, PersonalUserLoginResponse
+from app.crud.personal_user import get_personal_user_by_username, create_personal_user
+from app.core.security import verify_password
 
 router = APIRouter()
 
@@ -94,24 +94,4 @@ def login_personal_user(user_credentials: PersonalUserLogin, db: Session = Depen
         "refresh_token": refresh_token,
         "token_type": "bearer",
         "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    }
-
-@router.get("/me", response_model=PersonalUser)
-def get_current_personal_user(
-    current_user: PersonalUser = Depends(get_current_user_dependency)
-):
-    """获取当前个人用户信息"""
-    return current_user
-
-@router.put("/me", response_model=PersonalUser)
-def update_current_personal_user(
-    user_update: PersonalUserUpdate,
-    db: Session = Depends(get_db),
-    current_user: PersonalUser = Depends(get_current_user_dependency)
-):
-    """更新当前个人用户信息"""
-    updated_user = update_personal_user(db=db, user_id=current_user.id, user_update=user_update)
-    if not updated_user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    
-    return updated_user 
+    } 
