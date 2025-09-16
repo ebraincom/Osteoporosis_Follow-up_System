@@ -210,495 +210,384 @@
           </div>
         </div>
       </div>
-
-      <!-- 右侧历史记录栏 -->
-      <div class="right-sidebar">
-        <div class="sidebar-header">
-          <h3>历史记录</h3>
-        </div>
-        <div class="history-list">
-          <div v-if="historyRecords.length > 0">
-            <div v-for="record in historyRecords" :key="record.id" class="history-item">
-              <div class="history-content">
-                <div class="history-title">{{ record.patientName }} - {{ record.action }}</div>
-                <div class="history-date">{{ formatDate(record.timestamp) }}</div>
-                <div class="history-desc">{{ record.description }}</div>
-              </div>
-              <el-button size="small" type="primary" @click="viewHistoryDetail(record)">查看</el-button>
-            </div>
-          </div>
-          <div v-else class="no-history">
-            <el-empty description="暂无历史记录" :image-size="60" />
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- 个人用户首页：个人信息录入表单 -->
+    <!-- 个人用户首页：个人信息展示和患者档案 -->
     <div v-else class="personal-home">
       <!-- 主内容区 -->
       <div class="main-content">
-        <!-- 左侧：个人信息录入和患者列表 -->
+        <!-- 左侧：个人信息展示 -->
         <div class="left-panel">
-          <!-- 个人信息录入表单 -->
-          <div class="form-section">
-            <div class="form-header">
-              <h3>个人信息录入</h3>
-              <p>请填写您的个人信息，系统将为您创建患者档案</p>
+          <!-- 个人信息展示 -->
+          <div class="personal-info-section">
+            <div class="info-header">
+              <h3>个人信息</h3>
             </div>
             
-            <!-- 提交成功提示 -->
-            <div v-if="submitSuccess" class="submit-success">
-              <el-alert
-                title="提交成功！"
-                type="success"
-                :closable="false"
-                show-icon
-              >
-                <template #default>
-                  <p>患者信息已成功保存到数据库，您可以在右侧查看详细信息。</p>
-                </template>
-              </el-alert>
-            </div>
-            
-            <el-form 
-              ref="patientFormRef" 
-              :model="patientForm" 
-              :rules="patientFormRules" 
-              label-width="120px"
-              class="patient-form"
-            >
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="档案编号" prop="patient_id">
-                    <el-input 
-                      v-model="patientForm.patient_id" 
-                      placeholder="系统自动生成" 
-                      readonly
-                      disabled
-                      class="auto-generated-field"
-                    >
-                      <template #prepend>
-                        <el-tooltip 
-                          content="档案编号由系统自动生成" 
-                          placement="top"
-                        >
-                          <el-icon><InfoFilled /></el-icon>
-                        </el-tooltip>
-                      </template>
-                      <template #append>
-                        <el-tooltip content="重新生成档案编号" placement="top">
-                          <el-button 
-                            type="text" 
-                            size="small" 
-                            @click="regeneratePatientId"
-                            class="regenerate-btn"
-                          >
-                            <el-icon><Refresh /></el-icon>
-                          </el-button>
-                        </el-tooltip>
-                      </template>
-                    </el-input>
-                    <div class="field-hint">
-                      <el-icon><InfoFilled /></el-icon>
-                      <span>档案编号由系统自动生成</span>
+            <!-- 个人信息卡片 -->
+            <div class="personal-info-card">
+              <!-- 基本信息区域 -->
+              <div class="basic-info-section">
+                <h4 class="section-title">基本信息</h4>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <label>姓名</label>
+                    <span>{{ personalUserInfo.name || '未设置' }}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>年龄</label>
+                    <span>{{ personalUserInfo.age || '未设置' }}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>性别</label>
+                    <span>{{ personalUserInfo.gender === 'FEMALE' ? '女' : personalUserInfo.gender === 'MALE' ? '男' : '未设置' }}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>联系电话</label>
+                    <span>{{ personalUserInfo.phone || '未设置' }}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>邮箱</label>
+                    <span>{{ personalUserInfo.email || '未设置' }}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>地址</label>
+                    <span>{{ personalUserInfo.address || '未设置' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 身体指标区域 -->
+              <div class="health-metrics-section">
+                <h4 class="section-title">身体指标</h4>
+                <div class="metrics-grid">
+                  <div class="metric-item">
+                    <div class="metric-label">身高</div>
+                    <div class="metric-value">{{ personalUserInfo.height ? personalUserInfo.height + 'cm' : '未设置' }}</div>
+                  </div>
+                  <div class="metric-item">
+                    <div class="metric-label">体重</div>
+                    <div class="metric-value">{{ personalUserInfo.weight ? personalUserInfo.weight + 'kg' : '未设置' }}</div>
+                  </div>
+                  <div class="metric-item">
+                    <div class="metric-label">T值</div>
+                    <div class="metric-value">{{ personalUserInfo.t_score || '未设置' }}</div>
+                  </div>
+                  <div class="metric-item">
+                    <div class="metric-label">Z值</div>
+                    <div class="metric-value">{{ personalUserInfo.z_score || '未设置' }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 病史信息区域 -->
+              <div class="medical-history-section">
+                <h4 class="section-title">病史信息</h4>
+                <div class="history-cards">
+                  <div class="history-card">
+                    <div class="history-label">现病史</div>
+                    <div class="history-content">
+                      {{ personalUserInfo.medical_history || '暂无现病史记录' }}
                     </div>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="姓名" prop="name">
-                    <el-input v-model="patientForm.name" placeholder="请输入姓名" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="年龄" prop="age">
-                    <el-input v-model="patientForm.age" type="number" placeholder="请输入年龄" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="性别" prop="gender">
-                    <el-select v-model="patientForm.gender" placeholder="请选择性别" style="width: 100%">
-                      <el-option label="男" value="male" />
-                      <el-option label="女" value="female" />
-                    </el-select>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="联系电话" prop="phone">
-                    <el-input v-model="patientForm.phone" placeholder="请输入联系电话" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="邮箱" prop="email">
-                    <el-input v-model="patientForm.email" placeholder="请输入邮箱（可选）" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="身高(cm)" prop="height">
-                    <el-input v-model="patientForm.height" type="number" placeholder="请输入身高" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="体重(kg)" prop="weight">
-                    <el-input v-model="patientForm.weight" type="number" placeholder="请输入体重" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="T值" prop="t_score">
-                    <el-input v-model="patientForm.t_score" type="number" step="0.1" placeholder="请输入T值" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="Z值" prop="z_score">
-                    <el-input v-model="patientForm.z_score" type="number" step="0.1" placeholder="请输入Z值" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="风险等级" prop="risk_level">
-                    <el-select v-model="patientForm.risk_level" placeholder="请选择风险等级" style="width: 100%">
-                      <el-option label="低危" value="low" />
-                      <el-option label="中危" value="medium" />
-                      <el-option label="高危" value="high" />
-                    </el-select>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="地址" prop="address">
-                    <el-input v-model="patientForm.address" placeholder="请输入详细地址" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <el-row :gutter="20">
-                <el-col :span="24">
-                  <el-form-item label="现病史" prop="medical_history">
-                    <el-input 
-                      v-model="patientForm.medical_history" 
-                      type="textarea" 
-                      :rows="3"
-                      placeholder="请描述您的现病史（可选）" 
-                    />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <el-row :gutter="20">
-                <el-col :span="24">
-                  <el-form-item label="家族史" prop="family_history">
-                    <el-input 
-                      v-model="patientForm.family_history" 
-                      type="textarea" 
-                      :rows="3"
-                      placeholder="请描述您的家族史（可选）" 
-                    />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <el-row :gutter="20">
-                <el-col :span="24">
-                  <el-form-item label="用药史" prop="medications">
-                    <el-input 
-                      v-model="patientForm.medications" 
-                      type="textarea" 
-                      :rows="3" 
-                      placeholder="请输入用药史（可选）" 
-                    />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              
-              <!-- 表单操作按钮 -->
-              <div class="form-actions">
-                <el-button 
-                  type="primary" 
-                  size="large" 
-                  @click="submitPatientForm" 
-                  :loading="submitting"
-                  :disabled="submitting"
-                >
-                  <el-icon><Check /></el-icon>
-                  {{ submitting ? '提交中...' : '提交个人信息' }}
+                  </div>
+                  <div class="history-card">
+                    <div class="history-label">家族史</div>
+                    <div class="history-content">
+                      {{ personalUserInfo.family_history || '暂无家族史记录' }}
+                    </div>
+                  </div>
+                  <div class="history-card">
+                    <div class="history-label">用药史</div>
+                    <div class="history-content">
+                      {{ personalUserInfo.medications || '暂无用药史记录' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 操作按钮区域 -->
+              <div class="action-buttons">
+                <el-button type="primary" @click="showAddDetailsDialog" size="large">
+                  <el-icon><Plus /></el-icon>
+                  添加详情
                 </el-button>
-                <el-button 
-                  size="large" 
-                  @click="resetPatientForm"
-                  :disabled="submitting"
-                >
-                  <el-icon><Refresh /></el-icon>
-                  重置表单
+                <el-button type="success" @click="showEditInfoDialog" size="large">
+                  <el-icon><Edit /></el-icon>
+                  编辑信息
                 </el-button>
               </div>
-            </el-form>
+            </div>
           </div>
-
-          <!-- 患者表格 -->
-          <div class="patient-table-section">
-            <div class="table-header">
+        </div>
+        
+        <!-- 右侧：患者档案信息 -->
+        <div class="right-panel">
+          <div class="patient-files-section">
+            <div class="files-header">
               <h3>我的患者档案</h3>
               <p>以下是您的患者档案信息</p>
             </div>
             
-            <el-table
-              :data="filteredPatients"
-              style="width: 100%"
-              @row-click="handlePatientClick"
-              :row-class-name="getRowClassName"
-              highlight-current-row
-            >
-              <el-table-column prop="name" label="用户名称" width="120" />
-              <el-table-column prop="level" label="病人等级" width="100">
-                <template #default="{ row }">
-                  <el-tag
-                    :type="getLevelType(row.level)"
-                    size="small"
-                  >
-                    {{ getLevelText(row.level) }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="age" label="年龄" width="80" />
-              <el-table-column prop="gender" label="性别" width="80" />
-              <el-table-column prop="keyIndicator" label="关键指标" width="100" />
-              <el-table-column prop="hospital" label="就医机构" min-width="150" />
-              <el-table-column label="操作" width="120" fixed="right">
-                <template #default="{ row }">
-                  <el-button 
-                    type="primary" 
-                    size="small" 
-                    @click.stop="viewPatient(row)"
-                    :class="{ 'is-selected': selectedPatient?.id === row.id }"
-                  >
-                    {{ selectedPatient?.id === row.id ? '已选中' : '查看' }}
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </div>
-
-        <!-- 右侧：患者详情 -->
-        <div class="right-panel">
-          <div v-if="selectedPatient" class="patient-detail">
-            <div class="detail-header">
-              <h2>患者综合信息档案-{{ selectedPatient.name }}</h2>
-              <div class="file-info">
-                <span>档案编号: {{ selectedPatient.fileNo }}</span>
-                <span>生成日期: {{ selectedPatient.generateDate }}</span>
+            <!-- 患者档案列表 -->
+            <div class="patient-files-list">
+              <div v-if="patientFiles.length === 0" class="no-files">
+                <el-empty description="暂无患者档案" />
               </div>
-            </div>
-
-            <div class="detail-content">
-              <!-- 基本信息 -->
-              <div class="info-section">
-                <h3>一、基本信息</h3>
-                <div class="info-grid">
-                  <div class="info-item">
-                    <span class="label">姓名:</span>
-                    <span class="value">{{ selectedPatient.name }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">性别:</span>
-                    <span class="value">{{ selectedPatient.gender }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">年龄:</span>
-                    <span class="value">{{ selectedPatient.age }}岁</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">联系电话:</span>
-                    <span class="value">{{ selectedPatient.phone }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">身份证号:</span>
-                    <span class="value">{{ selectedPatient.idCard }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">地址:</span>
-                    <span class="value">{{ selectedPatient.address }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">紧急联系人:</span>
-                    <span class="value">{{ selectedPatient.emergencyContact }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 临床诊断信息 -->
-              <div class="info-section">
-                <h3>二、临床诊断信息</h3>
-                <div class="info-grid">
-                  <div class="info-item">
-                    <span class="label">主要诊断:</span>
-                    <span class="value">{{ selectedPatient.diagnosis }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">患者等级:</span>
-                    <el-tag :type="getLevelType(selectedPatient.level)" size="small">
-                      {{ getLevelText(selectedPatient.level) }}
+              <div v-else>
+                <div 
+                  v-for="file in patientFiles" 
+                  :key="file.id"
+                  class="patient-file-item"
+                  @click="selectPatientFile(file)"
+                >
+                  <div class="file-header">
+                    <span class="file-id">{{ file.patient_id }}</span>
+                    <el-tag :type="getRiskLevelType(file.risk_level)" size="small">
+                      {{ getRiskLevelText(file.risk_level) }}
                     </el-tag>
                   </div>
-                  <div class="info-item">
-                    <span class="label">关键指标:</span>
-                    <span class="value">{{ selectedPatient.keyIndicator }}</span>
-                  </div>
-                </div>
-                <div class="bone-density-info">
-                  <h4>骨密度详情</h4>
-                  <div class="info-grid">
-                    <div class="info-item">
-                      <span class="label">检测方法:</span>
-                      <span class="value">{{ selectedPatient.boneDensity.method }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="label">检测部位:</span>
-                      <span class="value">{{ selectedPatient.boneDensity.site }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="label">T值:</span>
-                      <span class="value">{{ selectedPatient.boneDensity.tScore }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="label">Z值:</span>
-                      <span class="value">{{ selectedPatient.boneDensity.zScore }}</span>
-                    </div>
-                    <div class="info-item full-width">
-                      <span class="label">结论:</span>
-                      <span class="value">{{ selectedPatient.boneDensity.conclusion }}</span>
-                    </div>
+                  <div class="file-info">
+                    <p><strong>姓名:</strong> {{ file.name }}</p>
+                    <p><strong>年龄:</strong> {{ file.age }}岁</p>
+                    <p><strong>性别:</strong> {{ file.gender === 'female' ? '女' : '男' }}</p>
+                    <p><strong>电话:</strong> {{ file.phone }}</p>
+                    <p v-if="file.address"><strong>地址:</strong> {{ file.address }}</p>
                   </div>
                 </div>
               </div>
-
-              <!-- 病史与风险因素 -->
-              <div class="info-section">
-                <h3>三、病史与风险因素</h3>
-                <div class="history-item">
-                  <h4>现病史</h4>
-                  <p>{{ selectedPatient.currentHistory }}</p>
-                </div>
-                <div class="history-item">
-                  <h4>既往史</h4>
-                  <p>{{ selectedPatient.pastHistory }}</p>
-                </div>
-                <div class="history-item">
-                  <h4>个人史</h4>
-                  <p>{{ selectedPatient.personalHistory }}</p>
-                </div>
-              </div>
             </div>
-          </div>
-          
-          <div v-else class="no-patient-selected">
-            <el-empty description="请选择患者查看详细信息" />
-          </div>
-        </div>
-      </div>
-
-      <!-- 右侧历史记录栏 -->
-      <div class="right-sidebar">
-        <div class="sidebar-header">
-          <h3>历史记录</h3>
-        </div>
-        <div class="history-list">
-          <div v-if="historyRecords.length > 0">
-            <div v-for="record in historyRecords" :key="record.id" class="history-item">
-              <div class="history-content">
-                <div class="history-title">{{ record.patientName }} - {{ record.action }}</div>
-                <div class="history-date">{{ formatDate(record.timestamp) }}</div>
-                <div class="history-desc">{{ record.description }}</div>
-              </div>
-              <el-button size="small" type="primary" @click="viewHistoryDetail(record)">查看</el-button>
-            </div>
-          </div>
-          <div v-else class="no-history">
-            <el-empty description="暂无历史记录" :image-size="60" />
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 添加详情弹窗 -->
+    <el-dialog
+      v-model="addDetailsDialogVisible"
+      title="添加详情信息"
+      width="60%"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="addDetailsFormRef"
+        :model="addDetailsForm"
+        :rules="addDetailsRules"
+        label-width="120px"
+      >
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="地址" prop="address">
+              <el-input v-model="addDetailsForm.address" placeholder="请输入详细地址" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="身高(cm)" prop="height">
+              <el-input-number v-model="addDetailsForm.height" :min="100" :max="250" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="体重(kg)" prop="weight">
+              <el-input-number v-model="addDetailsForm.weight" :min="20" :max="200" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="T值" prop="t_score">
+              <el-input-number v-model="addDetailsForm.t_score" :min="-5" :max="5" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Z值" prop="z_score">
+              <el-input-number v-model="addDetailsForm.z_score" :min="-5" :max="5" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="风险等级" prop="risk_level">
+              <el-select v-model="addDetailsForm.risk_level" placeholder="请选择风险等级" style="width: 100%">
+                <el-option label="低危" value="low" />
+                <el-option label="中危" value="medium" />
+                <el-option label="高危" value="high" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="现病史" prop="medical_history">
+              <el-input v-model="addDetailsForm.medical_history" type="textarea" :rows="3" placeholder="请描述您的现病史" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="家族史" prop="family_history">
+              <el-input v-model="addDetailsForm.family_history" type="textarea" :rows="3" placeholder="请描述您的家族史" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="用药史" prop="medications">
+              <el-input v-model="addDetailsForm.medications" type="textarea" :rows="3" placeholder="请输入用药史" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="addDetailsDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitAddDetails" :loading="submittingDetails">
+            {{ submittingDetails ? '提交中...' : '确认添加' }}
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑信息弹窗 -->
+    <el-dialog
+      v-model="editInfoDialogVisible"
+      title="编辑个人信息"
+      width="60%"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="editInfoFormRef"
+        :model="editInfoForm"
+        :rules="editInfoRules"
+        label-width="120px"
+      >
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="姓名" prop="name">
+              <el-input v-model="editInfoForm.name" placeholder="请输入姓名" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="年龄" prop="age">
+              <el-input-number v-model="editInfoForm.age" :min="1" :max="120" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="性别" prop="gender">
+              <el-select v-model="editInfoForm.gender" placeholder="请选择性别" style="width: 100%">
+                <el-option label="男" value="MALE" />
+                <el-option label="女" value="FEMALE" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="联系电话" prop="phone">
+              <el-input v-model="editInfoForm.phone" placeholder="请输入联系电话" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="邮箱" prop="email">
+              <el-input v-model="editInfoForm.email" placeholder="请输入邮箱" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="editInfoDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitEditInfo" :loading="submittingEdit">
+            {{ submittingEdit ? '保存中...' : '保存修改' }}
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Refresh, Edit } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { ElAlert, ElTooltip, ElIcon, ElInput, ElButton, ElSelect, ElOption, ElRow, ElCol, ElForm, ElFormItem, ElTable, ElTableColumn, ElTag, ElEmpty } from 'element-plus'
-import { InfoFilled, Refresh, Check } from '@element-plus/icons-vue'
+import request from '@/utils/request'
+import type { Patient } from '@/types/patient'
 
-// 响应式数据
+// 用户store
 const userStore = useUserStore()
+
+// 机构用户相关数据
+const loading = ref(false)
+const patients = ref<any[]>([])
 const selectedPatient = ref<any>(null)
 const currentFilter = ref('all')
 const searchKeyword = ref('')
-const currentDate = ref(new Date())
 
 // 历史记录数组
 const historyRecords = ref<any[]>([])
 
-// 真实患者数据（从API获取）
-const patients = ref<any[]>([])
+// 个人用户相关数据
+const personalUserInfo = ref<any>({})
+const patientFiles = ref<any[]>([])
+const selectedPatientFile = ref<any>(null)
 
-// 表单数据
-const patientForm = ref({
-  patient_id: '',
-  name: '',
-  age: '',
-  gender: '',
-  phone: '',
-  email: '',
-  height: '',
-  weight: '',
-  t_score: '',
-  z_score: '',
-  risk_level: 'low',
+// 弹窗控制
+const addDetailsDialogVisible = ref(false)
+const editInfoDialogVisible = ref(false)
+const submittingDetails = ref(false)
+const submittingEdit = ref(false)
+
+// 添加详情表单
+const addDetailsForm = ref({
   address: '',
+  height: null,
+  weight: null,
+  t_score: null,
+  z_score: null,
+  risk_level: '',
   medical_history: '',
   family_history: '',
-  medications: '',
-  created_at: ''
+  medications: ''
 })
 
-const patientFormRef = ref<any>(null)
-const submitting = ref(false)
-const submitSuccess = ref(false)
+// 编辑信息表单
+const editInfoForm = ref({
+  name: '',
+  age: null,
+  gender: '',
+  phone: '',
+  email: ''
+})
 
-const patientFormRules = {
-  patient_id: [{ required: true, message: '请输入档案编号', trigger: 'blur' }],
+// 表单验证规则
+const addDetailsRules = {
+  address: [{ required: true, message: '请输入地址', trigger: 'blur' }]
+}
+
+const editInfoRules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  age: [{ required: true, message: '请输入年龄', trigger: 'blur' }],
+  age: [{ required: true, message: '请输入年龄', trigger: 'change' }],
   gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
-  phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-  t_score: [{ required: true, message: '请输入T值', trigger: 'blur' }],
-  z_score: [{ required: true, message: '请输入Z值', trigger: 'blur' }],
-  risk_level: [{ required: true, message: '请选择风险等级', trigger: 'change' }],
-  address: [{ required: true, message: '请输入地址', trigger: 'blur' }],
+  phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
 }
 
 // 计算属性
 const filteredPatients = computed(() => {
   let result = patients.value
 
-  // 等级筛选
+  // 风险等级筛选
   if (currentFilter.value !== 'all') {
-    result = result.filter(patient => patient.level === currentFilter.value)
+    result = result.filter(patient => patient.risk_level === currentFilter.value)
   }
 
   // 关键词搜索
@@ -706,59 +595,148 @@ const filteredPatients = computed(() => {
     const keyword = searchKeyword.value.toLowerCase().trim()
     result = result.filter(patient => 
       patient.name.toLowerCase().includes(keyword) ||
-      patient.hospital?.toLowerCase().includes(keyword) ||
-      patient.fileNo?.toLowerCase().includes(keyword)
+      patient.patient_id.toLowerCase().includes(keyword) ||
+      patient.phone.includes(keyword)
     )
   }
 
   return result
 })
 
-// 获取患者数据
+// 方法
+const setFilter = (filter: string) => {
+  currentFilter.value = filter
+}
+
+const handleSearch = () => {
+  // 搜索逻辑已在计算属性中处理
+}
+
+const handlePatientClick = (row: any) => {
+  selectedPatient.value = row
+  // 添加历史记录
+  addHistoryRecord(row)
+}
+
+const viewPatient = (patient: any) => {
+  selectedPatient.value = patient
+  ElMessage.info(`已选择患者: ${patient.name}`)
+  addHistoryRecord(patient)
+}
+
+const getRowClassName = ({ row }: { row: any }) => {
+  return selectedPatient.value?.id === row.id ? 'selected-row' : ''
+}
+
+const addHistoryRecord = (patient: any) => {
+  const record = {
+    id: Date.now(),
+    patientName: patient.name,
+    patientId: patient.id,
+    action: '查看患者信息',
+    timestamp: new Date(),
+    description: `查看了患者${patient.name}的基本信息`
+  }
+  
+  // 检查是否已存在相同记录，避免重复
+  const existingRecord = historyRecords.value.find(r => 
+    r.patientId === patient.id && r.action === '查看患者信息'
+  )
+  
+  if (!existingRecord) {
+    historyRecords.value.unshift(record)
+    // 限制历史记录数量，保留最近20条
+    if (historyRecords.value.length > 20) {
+      historyRecords.value = historyRecords.value.slice(0, 20)
+    }
+  }
+}
+
+// 个人用户方法
+const showAddDetailsDialog = () => {
+  addDetailsDialogVisible.value = true
+}
+
+const showEditInfoDialog = () => {
+  // 填充编辑表单
+  editInfoForm.value = {
+    name: personalUserInfo.value.name || '',
+    age: personalUserInfo.value.age || null,
+    gender: personalUserInfo.value.gender || '',
+    phone: personalUserInfo.value.phone || '',
+    email: personalUserInfo.value.email || ''
+  }
+  editInfoDialogVisible.value = true
+}
+
+const selectPatientFile = (file: any) => {
+  selectedPatientFile.value = file
+}
+
+const submitAddDetails = async () => {
+  try {
+    submittingDetails.value = true
+    
+    // 调用API更新个人用户详情
+    const response = await request.put('/v1/personal-auth/me', addDetailsForm.value)
+    
+    ElMessage.success('详情信息添加成功')
+    addDetailsDialogVisible.value = false
+    
+    // 重新获取个人用户信息
+    await fetchPersonalUserInfo()
+    
+  } catch (error: any) {
+    console.error('添加详情失败:', error)
+    ElMessage.error(`添加详情失败: ${error.response?.data?.detail || error.message}`)
+  } finally {
+    submittingDetails.value = false
+  }
+}
+
+const submitEditInfo = async () => {
+  try {
+    submittingEdit.value = true
+    
+    // 调用API更新个人用户信息
+    const response = await request.put('/v1/personal-auth/me', editInfoForm.value)
+    
+    ElMessage.success('个人信息更新成功')
+    editInfoDialogVisible.value = false
+    
+    // 重新获取个人用户信息
+    await fetchPersonalUserInfo()
+    
+  } catch (error: any) {
+    console.error('更新信息失败:', error)
+    ElMessage.error(`更新信息失败: ${error.response?.data?.detail || error.message}`)
+  } finally {
+    submittingEdit.value = false
+  }
+}
+
+// 获取机构用户患者列表
 const fetchPatients = async () => {
   try {
-    console.log('首页开始获取患者数据...')
     const response = await request.get('/v1/patients/')
-    console.log('首页API响应:', response)
-    console.log('response类型:', typeof response)
-    console.log('response.data类型:', typeof response?.data)
-    console.log('response.data内容:', response?.data)
-    console.log('response.data.patients存在:', !!(response?.data as any)?.patients)
     
     let patientData: any[] = []
     
     // 兼容不同的API响应格式
     if (response && ((response as any).patients || response.data?.patients || Array.isArray(response) || Array.isArray(response.data))) {
-      console.log('首页响应数据结构:', {
-        hasPatients: !!((response as any).patients || response.data?.patients),
-        patientsType: typeof ((response as any).patients || response.data?.patients),
-        isArray: Array.isArray((response as any).patients || response.data?.patients),
-        responseKeys: Object.keys(response),
-        dataKeys: response.data ? Object.keys(response.data) : []
-      })
-      
       // 优先检查response.patients，然后检查response.data.patients
       const patientsData = (response as any).patients || response.data?.patients
       
       if (patientsData && Array.isArray(patientsData)) {
         // 标准格式：{ patients: [...], total: 3, page: 1, size: 10 }
         patientData = patientsData
-        console.log('首页使用标准格式数据，患者数量:', patientData.length)
       } else if (Array.isArray(response) || Array.isArray(response.data)) {
         // 直接返回数组格式：[...]
         patientData = Array.isArray(response) ? response : response.data
-        console.log('首页使用直接数组格式数据，患者数量:', patientData.length)
       } else {
-        console.warn('首页响应数据结构不符合预期:', response)
         patientData = []
       }
     } else {
-      console.warn('首页响应数据为空:', response)
-      console.warn('response存在:', !!response)
-      console.warn('response.patients存在:', !!(response as any)?.patients)
-      console.warn('response.data存在:', !!response?.data)
-      console.warn('response.data.patients存在:', !!(response?.data as any)?.patients)
-      console.warn('response.data值:', response?.data)
       patientData = []
     }
     
@@ -798,10 +776,8 @@ const fetchPatients = async () => {
         selectedPatient.value = firstPatient
         addHistoryRecord(firstPatient)
         ElMessage.info(`已自动选择患者: ${firstPatient.name}`)
-        console.log('首页成功加载患者数据，选中患者:', firstPatient.name)
       }
     } else {
-      console.log('首页未获取到患者数据')
       patients.value = []
     }
     
@@ -820,54 +796,38 @@ const getBoneDensityConclusion = (tScore: number) => {
   return '骨密度显著偏低，符合重度骨质疏松症标准'
 }
 
-// 方法
-const setFilter = (filter: string) => {
-  currentFilter.value = filter
-}
-
-const handleSearch = () => {
-  if (searchKeyword.value.trim()) {
-    ElMessage.success(`搜索"${searchKeyword.value}"完成，找到${filteredPatients.value.length}条记录`)
-  } else {
-    ElMessage.info('请输入搜索关键词')
+// 获取个人用户信息
+const fetchPersonalUserInfo = async () => {
+  try {
+    const response = await request.get('/v1/personal-auth/me')
+    personalUserInfo.value = response
+  } catch (error: any) {
+    console.error('获取个人用户信息失败:', error)
+    ElMessage.error('获取个人用户信息失败')
   }
 }
 
-const handlePatientClick = (row: any) => {
-  selectedPatient.value = row
-  // 添加历史记录
-  addHistoryRecord(row)
-}
-
-const addHistoryRecord = (patient: any) => {
-  const record = {
-    id: Date.now(),
-    patientName: patient.name,
-    patientId: patient.id,
-    action: '查看患者信息',
-    timestamp: new Date(),
-    description: `查看了患者${patient.name}的基本信息`
-  }
-  
-  // 检查是否已存在相同记录，避免重复
-  const existingRecord = historyRecords.value.find(r => 
-    r.patientId === patient.id && r.action === '查看患者信息'
-  )
-  
-  if (!existingRecord) {
-    historyRecords.value.unshift(record)
-    // 限制历史记录数量，保留最近20条
-    if (historyRecords.value.length > 20) {
-      historyRecords.value = historyRecords.value.slice(0, 20)
+// 获取个人用户患者档案
+const fetchPatientFiles = async () => {
+  try {
+    // 个人用户直接使用现有的API获取患者档案
+    const response = await request.get('/v1/patients/')
+    
+    if (response && (response as any).patients) {
+      patientFiles.value = (response as any).patients
+    } else {
+      patientFiles.value = []
     }
+  } catch (error: any) {
+    console.error('获取患者档案失败:', error)
+    ElMessage.error('获取患者档案失败')
+    patientFiles.value = []
   }
 }
 
-const getRowClassName = ({ row }: { row: any }) => {
-  return selectedPatient.value?.id === row.id ? 'selected-row' : ''
-}
-
-const getLevelType = (level: string) => {
+// 工具方法
+const getLevelType = (level: string | undefined) => {
+  if (!level) return 'info'
   switch (level) {
     case 'high': return 'danger'
     case 'medium': return 'warning'
@@ -876,7 +836,8 @@ const getLevelType = (level: string) => {
   }
 }
 
-const getLevelText = (level: string) => {
+const getLevelText = (level: string | undefined) => {
+  if (!level) return '未知'
   switch (level) {
     case 'high': return '高危'
     case 'medium': return '中危'
@@ -885,87 +846,35 @@ const getLevelText = (level: string) => {
   }
 }
 
-const viewPatient = (patient: any) => {
-  selectedPatient.value = patient
-  ElMessage.info(`已选择患者: ${patient.name}`)
-  addHistoryRecord(patient)
-}
-
-const viewHistoryDetail = (record: any) => {
-  // 根据历史记录找到对应的患者
-  const patient = patients.value.find(p => p.id === record.patientId)
-  if (patient) {
-    selectedPatient.value = patient
-    ElMessage.success(`已切换到患者${patient.name}的详细信息`)
-  } else {
-    ElMessage.error('患者信息不存在')
+const getRiskLevelType = (level: string | undefined) => {
+  if (!level) return 'info'
+  switch (level) {
+    case 'high': return 'danger'
+    case 'medium': return 'warning'
+    case 'low': return 'success'
+    default: return 'info'
   }
 }
 
-// 格式化日期
-const formatDate = (date: Date) => {
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-// 重新生成档案编号
-const regeneratePatientId = () => {
-  patientForm.value.patient_id = `PAT${Date.now().toString().slice(-6)}`
-  ElMessage.success('档案编号已重新生成')
-}
-
-// 提交个人信息
-const submitPatientForm = async () => {
-  if (!patientFormRef.value) return
-
-  await patientFormRef.value.validate(async (valid: boolean) => {
-    if (valid) {
-      submitting.value = true
-      try {
-        const response = await request.post('/v1/patients/', patientForm.value)
-        console.log('提交个人信息成功:', response)
-        ElMessage.success('个人信息提交成功！')
-        submitSuccess.value = true
-        // 刷新患者列表，以便新患者立即显示
-        await fetchPatients()
-        // 自动选中新患者
-        if (patients.value.length > 0) {
-          selectedPatient.value = patients.value[0]
-          addHistoryRecord(patients.value[0])
-        }
-      } catch (error: any) {
-        console.error('提交个人信息失败:', error)
-        ElMessage.error('提交个人信息失败，请稍后再试')
-      } finally {
-        submitting.value = false
-      }
-    } else {
-      ElMessage.error('请检查表单填写是否完整')
-    }
-  })
-}
-
-// 重置表单
-const resetPatientForm = () => {
-  if (patientFormRef.value) {
-    patientFormRef.value.resetFields()
-    submitSuccess.value = false
-    ElMessage.info('表单已重置')
+const getRiskLevelText = (level: string | undefined) => {
+  if (!level) return '未知'
+  switch (level) {
+    case 'high': return '高危'
+    case 'medium': return '中危'
+    case 'low': return '低危'
+    default: return '未知'
   }
 }
 
 // 生命周期
 onMounted(async () => {
-  // 只对机构用户获取患者数据，个人用户不需要
   if (userStore.user?.user_type === 'institutional') {
+    // 机构用户获取患者列表
     await fetchPatients()
   } else {
-    console.log('个人用户登录，跳过患者数据获取')
+    // 个人用户获取个人信息和患者档案
+    await fetchPersonalUserInfo()
+    await fetchPatientFiles()
   }
 })
 </script>
@@ -978,114 +887,111 @@ onMounted(async () => {
 }
 
 .institutional-home {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  width: 100%;
 }
 
 .personal-home {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  width: 100%;
 }
 
 .main-content {
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  height: 100%;
 }
 
 .left-panel {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.right-panel {
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   padding: 20px;
   overflow-y: auto;
 }
 
-.right-sidebar {
-  width: 300px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin: 20px 20px 20px 0;
+.right-panel {
+  flex: 1;
   padding: 20px;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  border-left: 1px solid #e0e0e0;
 }
 
+/* 机构用户样式 */
 .search-section {
   background: white;
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.patient-table-section {
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .search-header {
   display: flex;
   align-items: center;
-  gap: 15px;
   margin-bottom: 15px;
 }
 
 .search-title {
   font-weight: 600;
-  color: #333;
+  margin-right: 15px;
 }
 
 .filter-buttons {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .search-input-section {
   display: flex;
   gap: 10px;
-  align-items: center;
 }
 
 .search-input {
   flex: 1;
 }
 
-.search-button {
-  white-space: nowrap;
+.patient-table-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.table-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.patient-table {
+  width: 100%;
+}
+
+.patient-detail {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .detail-header {
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 2px solid #667eea;
 }
 
 .detail-header h2 {
-  margin: 0 0 10px 0;
   color: #333;
-  font-size: 20px;
-  font-weight: 600;
+  margin: 0 0 10px 0;
 }
 
 .file-info {
   display: flex;
   gap: 20px;
-  font-size: 14px;
   color: #666;
+  font-size: 14px;
 }
 
 .info-section {
@@ -1093,33 +999,32 @@ onMounted(async () => {
 }
 
 .info-section h3 {
-  margin: 0 0 15px 0;
-  color: #333;
+  color: #667eea;
+  margin-bottom: 15px;
   font-size: 16px;
-  font-weight: 600;
-  border-left: 3px solid #667eea;
-  padding-left: 10px;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 15px;
 }
 
 .info-item {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .info-item.full-width {
   grid-column: 1 / -1;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .info-item .label {
   font-weight: 600;
   color: #333;
+  margin-right: 10px;
   min-width: 80px;
 }
 
@@ -1128,239 +1033,326 @@ onMounted(async () => {
   flex: 1;
 }
 
-.bone-density-info {
-  margin-top: 15px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 6px;
-}
-
-.bone-density-info h4 {
-  margin: 0 0 10px 0;
-  color: #333;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.history-item {
-  margin-bottom: 15px;
-}
-
-.history-item h4 {
-  margin: 0 0 8px 0;
-  color: #333;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.history-item p {
-  margin: 0;
-  color: #666;
-  line-height: 1.5;
-}
-
-.selected-row {
-  background-color: #e6f7ff !important;
-}
-
-.selected-row:hover {
-  background-color: #d4f1ff !important;
-}
-
-/* 选中按钮样式 */
-.el-button.is-selected {
-  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%) !important;
-  border-color: #52c41a !important;
-  color: white !important;
-  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3) !important;
-}
-
-.el-button.is-selected:hover {
-  background: linear-gradient(135deg, #389e0d 0%, #237804 100%) !important;
-  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.4) !important;
-  transform: translateY(-1px);
-}
-
-.no-patient-selected {
+.no-selection {
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 400px;
+  justify-content: center;
+  height: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.sidebar-header h3 {
-  margin: 0 0 20px 0;
+/* 个人用户样式 */
+.personal-info-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.info-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #667eea;
+}
+
+.info-header h3 {
   color: #333;
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
-  border-bottom: 2px solid #667eea;
-  padding-bottom: 8px;
 }
 
-.history-list {
+.personal-info-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+/* 区域标题样式 */
+.section-title {
+  color: #667eea;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e9ecef;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: #667eea;
+}
+
+/* 基本信息区域 */
+.basic-info-section {
+  margin-bottom: 18px;
+}
+
+.basic-info-section .info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.basic-info-section .info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.basic-info-section .info-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.basic-info-section .info-item label {
+  font-weight: 600;
+  color: #333;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.basic-info-section .info-item span {
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 身体指标区域 */
+.health-metrics-section {
+  margin-bottom: 18px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.metric-item {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.metric-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  border-color: #667eea;
+}
+
+.metric-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 病史信息区域 */
+.medical-history-section {
+  margin-bottom: 18px;
+}
+
+.history-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-card {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.history-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #667eea, #764ba2);
+}
+
+.history-card:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+}
+
+.history-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.history-content {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+  min-height: 32px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 2px solid #667eea;
+}
+
+/* 操作按钮区域 */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.action-buttons .el-button {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.action-buttons .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.patient-files-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.files-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #667eea;
+}
+
+.files-header h3 {
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.files-header p {
+  color: #666;
+  margin: 0;
+}
+
+.patient-files-list {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
-.history-item {
-  padding: 15px;
+.patient-file-item {
   background: #f8f9fa;
-  border-radius: 6px;
-  border-left: 3px solid #667eea;
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.patient-file-item:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+}
+
+.file-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.history-content {
-  flex: 1;
-}
-
-.history-title {
-  font-weight: 600;
-  color: #333;
-  font-size: 15px;
-  margin-bottom: 5px;
-}
-
-.history-date {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 5px;
-}
-
-.history-desc {
-  font-size: 13px;
-  color: #999;
   margin-bottom: 10px;
 }
 
-.no-history {
-  padding: 60px 20px;
-  text-align: center;
-}
-
-/* 按钮样式 */
-.el-button {
-  border-radius: 6px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.el-button--primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.el-button--primary:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  transform: translateY(-1px);
-}
-
-.el-button--default {
-  border: 1px solid #dcdfe6;
-  background: white;
-  color: #606266;
-}
-
-.el-button--default:hover {
-  border-color: #667eea;
-  color: #667eea;
-  background: #f8f9ff;
-}
-
-/* 表格样式 */
-:deep(.el-table) {
-  border-radius: 8px;
-}
-
-:deep(.el-table th) {
-  background-color: #fafafa;
-  color: #333;
+.file-id {
   font-weight: 600;
-}
-
-.patient-row {
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.patient-row:hover {
-  background-color: #f5f7fa;
-}
-
-.form-section {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.form-header {
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.form-header h3 {
-  margin: 0 0 10px 0;
   color: #333;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 14px;
 }
 
-.form-header p {
-  margin: 0;
+.file-info p {
+  margin: 5px 0;
+  font-size: 13px;
   color: #666;
-  font-size: 14px;
 }
 
-.submit-success {
-  margin-bottom: 20px;
-  padding: 15px;
-  background: #f0f9eb;
-  border: 1px solid #e1f3d8;
-  border-radius: 6px;
-  color: #67c23a;
-  font-size: 14px;
+.no-files {
+  text-align: center;
+  padding: 40px 20px;
 }
 
-.patient-form {
-  max-width: 800px;
-  margin: 0 auto;
+/* 弹窗样式 */
+.dialog-footer {
+  text-align: right;
 }
 
-.auto-generated-field .el-input__inner {
-  color: #909399;
-  font-style: italic;
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .right-panel {
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
 }
-
-.field-hint {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 5px;
-  color: #909399;
-  font-size: 12px;
-}
-
-.regenerate-btn {
-  color: #409eff;
-  font-size: 14px;
-}
-
-.regenerate-btn:hover {
-  color: #66b1ff;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-</style> 
+</style>

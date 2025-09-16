@@ -3,20 +3,14 @@
   <div class="followup-search">
     <h2>随访跟踪 - 患者检索</h2>
     
-    <!-- 状态显示 -->
-    <div class="status-section">
-      <el-alert
-        title="系统状态"
-        :description="`认证状态: ${authStatus}, Token: ${tokenStatus}`"
-        type="info"
-        show-icon
-        :closable="false"
-      />
-    </div>
-    
     <!-- 主要操作按钮 -->
     <div class="action-section">
-      <el-button type="primary" @click="showAddPatientDialog">
+      <!-- 机构用户显示新增患者按钮 -->
+      <el-button 
+        v-if="userStore.user?.user_type === 'institutional'" 
+        type="primary" 
+        @click="showAddPatientDialog"
+      >
         <el-icon><Plus /></el-icon>
         新增患者
       </el-button>
@@ -28,7 +22,7 @@
       
       <el-button type="warning" @click="testPatientsAPI">
         <el-icon><List /></el-icon>
-        测试API
+        自测试API
       </el-button>
     </div>
 
@@ -87,11 +81,24 @@
             </template>
           </el-table-column>
           <el-table-column prop="address" label="地址" min-width="150" show-overflow-tooltip />
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="280" fixed="right">
             <template #default="{ row }">
-              <el-button size="small" @click="viewPatient(row)">查看</el-button>
-              <el-button size="small" type="primary" @click="editPatient(row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="deletePatient(row)">删除</el-button>
+              <div class="action-buttons">
+                <el-button size="small" type="primary" @click="viewPatientArchive(row)">查看档案</el-button>
+                <!-- 机构用户显示编辑和删除按钮 -->
+                <template v-if="userStore.user?.user_type === 'institutional'">
+                  <el-button size="small" @click="editPatient(row)">编辑</el-button>
+                  <!-- 只有管理员可以删除 -->
+                  <el-button 
+                    v-if="isAdmin()" 
+                    size="small" 
+                    type="danger" 
+                    @click="deletePatient(row)"
+                  >
+                    删除
+                  </el-button>
+                </template>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -107,6 +114,38 @@
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
           />
+        </div>
+      </el-card>
+    </div>
+
+    <!-- 医疗机构容器 -->
+    <div class="medical-institutions-section">
+      <el-card title="曾就医机构">
+        <div class="institutions-container">
+          <div v-if="medicalInstitutions.length === 0" class="no-institutions">
+            <el-empty description="暂无就医机构记录" />
+          </div>
+          <div v-else class="institutions-list">
+            <div
+              v-for="institution in medicalInstitutions"
+              :key="institution.id"
+              class="institution-card"
+            >
+              <div class="institution-header">
+                <h4>{{ institution.name }}</h4>
+                <el-tag :type="institution.status === 'active' ? 'success' : 'info'" size="small">
+                  {{ institution.status === 'active' ? '当前' : '历史' }}
+                </el-tag>
+              </div>
+              <div class="institution-info">
+                <p><strong>科室:</strong> {{ institution.department }}</p>
+                <p><strong>主治医生:</strong> {{ institution.doctor }}</p>
+                <p><strong>首次就诊:</strong> {{ institution.firstVisit }}</p>
+                <p><strong>最近就诊:</strong> {{ institution.lastVisit }}</p>
+                <p><strong>就诊次数:</strong> {{ institution.visitCount }}次</p>
+              </div>
+            </div>
+          </div>
         </div>
       </el-card>
     </div>
@@ -449,6 +488,9 @@ import request from '@/utils/request'
 import type { Patient, PatientCreate, PatientUpdate } from '@/types/patient'
 import { Gender, RiskLevel } from '@/types/patient'
 
+// 用户store
+const userStore = useUserStore()
+
 // 响应式数据
 const loading = ref(false)
 const submitting = ref(false)
@@ -460,6 +502,30 @@ const pageSize = ref(10)
 const searchKeyword = ref('')
 const riskLevelFilter = ref('')
 const genderFilter = ref('')
+
+// 医疗机构数据
+const medicalInstitutions = ref([
+  {
+    id: 1,
+    name: '北京潞河医院',
+    department: '骨科',
+    doctor: '王一鸣',
+    firstVisit: '2025-01-15',
+    lastVisit: '2025-09-17',
+    visitCount: 5,
+    status: 'active'
+  },
+  {
+    id: 2,
+    name: '北京协和医院',
+    department: '内分泌科',
+    doctor: '张医生',
+    firstVisit: '2024-08-20',
+    lastVisit: '2024-12-10',
+    visitCount: 3,
+    status: 'history'
+  }
+])
 
 // 弹窗控制
 const addPatientDialogVisible = ref(false)
@@ -526,16 +592,6 @@ const editPatientRules = {
 }
 
 // 计算属性
-const authStatus = computed(() => {
-  const userStore = useUserStore()
-  return userStore.isAuthenticated ? '已认证' : '未认证'
-})
-
-const tokenStatus = computed(() => {
-  const token = localStorage.getItem('token')
-  if (!token) return '无'
-  return `${token.substring(0, 20)}...`
-})
 
 const filteredPatients = computed(() => {
   let result = patients.value
@@ -624,11 +680,12 @@ const submitAddPatient = async () => {
   }
 }
 
+
 const fetchPatients = async () => {
   try {
     loading.value = true
-    console.log('开始获取患者列表...')
     
+    // 调用API获取患者列表，后端会根据用户类型自动过滤
     const response = await request.get('/v1/patients/', {
       params: {
         skip: (currentPage.value - 1) * pageSize.value,
@@ -638,70 +695,23 @@ const fetchPatients = async () => {
       }
     })
     
-    console.log('API响应:', response)
-    console.log('response类型:', typeof response)
-    console.log('response.data类型:', typeof response?.data)
-    console.log('response.data内容:', response?.data)
-    console.log('response.data.patients存在:', !!(response?.data as any)?.patients)
-    console.log('response.data.patients类型:', typeof (response?.data as any)?.patients)
-    console.log('response.data.patients内容:', (response?.data as any)?.patients)
-    
-    // 调试：输出所有可能的数据路径
-    console.log('=== 调试信息 ===')
-    console.log('response.keys:', Object.keys(response || {}))
-    console.log('response.data.keys:', response?.data ? Object.keys(response.data) : 'undefined')
-    console.log('response.data.patients:', (response?.data as any)?.patients)
-    console.log('response.data.total:', (response?.data as any)?.total)
-    console.log('response.data.page:', (response?.data as any)?.page)
-    console.log('response.data.size:', (response?.data as any)?.size)
-    console.log('=== 调试信息结束 ===')
-    
-    // 检查响应数据结构，兼容不同的返回格式
-    if (response && ((response as any).patients || response.data?.patients || Array.isArray(response) || Array.isArray(response.data))) {
-      console.log('响应数据结构:', {
-        hasPatients: !!((response as any).patients || response.data?.patients),
-        patientsType: typeof ((response as any).patients || response.data?.patients),
-        isArray: Array.isArray((response as any).patients || response.data?.patients),
-        responseKeys: Object.keys(response),
-        dataKeys: response.data ? Object.keys(response.data) : []
-      })
-      
-      // 优先检查response.patients，然后检查response.data.patients
-      const patientsData = (response as any).patients || response.data?.patients
-      
-      if (patientsData && Array.isArray(patientsData)) {
-        // 标准格式：{ patients: [...], total: 3, page: 1, size: 10 }
-        console.log('使用标准格式数据，患者数量:', patientsData.length)
-        patients.value = patientsData
-        total.value = (response as any).total || response.data?.total || 0
-        currentPage.value = (response as any).page || response.data?.page || 1
-        pageSize.value = (response as any).size || response.data?.size || 10
-      } else if (Array.isArray(response) || Array.isArray(response.data)) {
-        // 直接返回数组格式：[...]
-        const arrayData = Array.isArray(response) ? response : response.data
-        console.log('使用直接数组格式数据，患者数量:', arrayData.length)
-        patients.value = arrayData
-        total.value = arrayData.length
-        currentPage.value = 1
-        pageSize.value = arrayData.length
-      } else {
-        console.warn('响应数据结构不符合预期:', response)
-        patients.value = []
-        total.value = 0
-      }
+    // 处理不同的响应格式
+    if (response && (response as any).patients) {
+      // 标准格式：{ patients: [...], total: 3, page: 1, size: 10 }
+      patients.value = (response as any).patients
+      total.value = (response as any).total || 0
+    } else if (response && response.data && response.data.patients) {
+      // 嵌套格式：{ data: { patients: [...] } }
+      patients.value = response.data.patients
+      total.value = response.data.total || 0
+    } else if (Array.isArray(response)) {
+      // 直接数组格式
+      patients.value = response
+      total.value = response.length
     } else {
-      console.warn('响应数据为空:', response)
-      console.warn('response存在:', !!response)
-      console.warn('response.patients存在:', !!(response as any)?.patients)
-      console.warn('response.data存在:', !!response?.data)
-      console.warn('response.data.patients存在:', !!(response?.data as any)?.patients)
-      console.warn('response.data值:', response?.data)
       patients.value = []
       total.value = 0
     }
-    
-    console.log('获取到的患者数据:', patients.value)
-    console.log('总数:', total.value)
     
   } catch (error: any) {
     console.error('获取患者列表失败:', error)
@@ -828,6 +838,17 @@ const testPatientsAPI = async () => {
   }
 }
 
+const viewPatientArchive = (patient: any) => {
+  // 调用原来的查看患者详情方法
+  viewPatient(patient)
+}
+
+// 判断是否为管理员（简单判断：用户名为"admin"或包含"管理员"）
+const isAdmin = () => {
+  const username = userStore.user?.username || ''
+  return username === 'admin' || username.includes('管理员') || username.includes('admin')
+}
+
 // 工具方法
 const getLevelType = (level: string | undefined) => {
   if (!level) return 'info'
@@ -851,15 +872,9 @@ const getLevelText = (level: string | undefined) => {
 
 // 生命周期
 onMounted(async () => {
-  console.log('Search.vue: 组件已挂载')
-  console.log('当前用户类型:', userStore.user?.user_type)
-  
-  // 只对机构用户获取患者列表，个人用户不需要
-  if (userStore.user?.user_type === 'institutional') {
-    await fetchPatients()
-  } else {
-    console.log('个人用户登录，跳过患者列表获取')
-  }
+  // 所有用户类型都需要获取患者列表
+  // 机构用户获取所有患者，个人用户获取自己的患者
+  await fetchPatients()
 })
 </script>
 
@@ -901,5 +916,80 @@ onMounted(async () => {
 
 .dialog-footer {
   text-align: right;
+}
+
+/* 医疗机构容器样式 */
+.medical-institutions-section {
+  margin-top: 20px;
+}
+
+.institutions-container {
+  padding: 10px 0;
+}
+
+.no-institutions {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.institutions-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.institution-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.institution-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #667eea;
+}
+
+.institution-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.institution-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.institution-info p {
+  margin: 6px 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.institution-info strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* 操作按钮样式 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.action-buttons .el-button {
+  margin: 0;
+  flex-shrink: 0;
 }
 </style> 

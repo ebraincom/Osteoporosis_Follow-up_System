@@ -1,0 +1,86 @@
+[33mcommit 3e8650ef5fc122aad39cef45493f3cb0bc6e3562[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31moos/master[m[33m, [m[1;31moos/HEAD[m[33m)[m
+Author: ebraincom <133956884+ebraincom@users.noreply.github.com>
+Date:   Tue Sep 16 15:42:33 2025 +0800
+
+    feat: 实现多档案编号患者支持和个人用户功能增强
+    
+    主要更新:
+    - 支持同一患者多个档案编号的随访回复显示
+    - 个人用户界面重构，显示个人信息而非患者列表
+    - 新增个人用户医疗字段支持(身高、体重、T-score等)
+    - 新增提醒管理API端点
+    - 优化API路由和认证系统
+    - 更新版本信息和联系方式
+    - 修复个人用户注册和登录问题
+    
+    技术改进:
+    - 后端CRUD函数支持按患者姓名查询
+    - 前端个人用户界面优化
+    - API端点支持多档案编号查询
+    - 数据库字段扩展和同步
+
+backend-python/__pycache__/main.cpython-310.pyc
+backend-python/app/api/v1/__pycache__/api.cpython-310.pyc
+backend-python/app/api/v1/api.py
+backend-python/app/api/v1/endpoints/__pycache__/followup_responses.cpython-310.pyc
+backend-python/app/api/v1/endpoints/__pycache__/followups.cpython-310.pyc
+backend-python/app/api/v1/endpoints/__pycache__/patients.cpython-310.pyc
+backend-python/app/api/v1/endpoints/__pycache__/personal_auth.cpython-310.pyc
+backend-python/app/api/v1/endpoints/__pycache__/reminders.cpython-310.pyc
+backend-python/app/api/v1/endpoints/followup_responses.py
+backend-python/app/api/v1/endpoints/followups.py
+backend-python/app/api/v1/endpoints/patients.py
+backend-python/app/api/v1/endpoints/personal_auth.py
+backend-python/app/api/v1/endpoints/reminders.py
+backend-python/app/core/__pycache__/config_simple.cpython-310.pyc
+backend-python/app/core/__pycache__/security.cpython-310.pyc
+backend-python/app/core/config_simple.py
+backend-python/app/core/security.py
+backend-python/app/crud/__pycache__/followup_response.cpython-310.pyc
+backend-python/app/crud/__pycache__/patient.cpython-310.pyc
+backend-python/app/crud/__pycache__/personal_user.cpython-310.pyc
+backend-python/app/crud/followup_response.py
+backend-python/app/crud/patient.py
+backend-python/app/models/__pycache__/__init__.cpython-310.pyc
+backend-python/app/models/__pycache__/personal_user.cpython-310.pyc
+backend-python/app/models/personal_user.py
+backend-python/app/schemas/__pycache__/personal_user.cpython-310.pyc
+backend-python/app/schemas/personal_user.py
+backend-python/fix_email_field.py
+backend-python/main.py
+backend-python/osteoporosis.db
+create_patient_for_personal_users.py
+debug_api_auth.py
+debug_api_issue.py
+debug_followup_records.py
+debug_register.py
+debug_user_patient_mapping.py
+decode_jwt_token.py
+deploy_user_choice_login.sh
+deploy_with_user_type_selection.sh
+fix_patient_user_mapping.py
+fix_server_deployment.py
+frontend/src/api/auth.ts
+frontend/src/api/followup.ts
+frontend/src/api/user.ts
+frontend/src/types/user.ts
+frontend/src/utils/request.ts
+frontend/src/views/Register.vue
+frontend/src/views/dashboard/Home.vue
+frontend/src/views/dashboard/ai/FallWarning.vue
+frontend/src/views/dashboard/followup/Records.vue
+frontend/src/views/dashboard/followup/Search.vue
+frontend/src/views/dashboard/settings/Help.vue
+frontend/src/views/dashboard/settings/Profile.vue
+frontend/src/views/dashboard/settings/Version.vue
+frontend/vite.config.ts
+osteoporosis.db
+r
+recheck_and_fix.py
+suifang.html
+sync_personal_users_to_patients.py
+verify_data_fix.py
+"\347\263\273\347\273\237\345\212\237\350\203\275\350\257\246\347\273\206\350\257\264\346\230\216\346\226\207\346\241\243.md"
+"\347\263\273\347\273\237\345\212\237\350\203\275\350\257\264\346\230\216\346\226\207\346\241\243.md"
+"\347\263\273\347\273\237\346\212\200\346\234\257\346\236\266\346\236\204\346\226\207\346\241\243.md"
+"\347\263\273\347\273\237\351\203\250\347\275\262\350\277\220\347\273\264\346\226\207\346\241\243.md"

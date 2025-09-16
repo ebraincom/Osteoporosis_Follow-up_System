@@ -386,6 +386,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import type { Patient } from '@/types/patient'
 import { Refresh } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
+
+// 用户store
+const userStore = useUserStore()
 
 // 扩展Patient类型，添加随访相关属性
 interface PatientWithFollowup extends Patient {

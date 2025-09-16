@@ -1,0 +1,11 @@
+warning: in the working copy of 'frontend/src/views/dashboard/followup/Records.vue', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/views/dashboard/followup/Search.vue', LF will be replaced by CRLF the next time Git touches it
+backend-python/__pycache__/main.cpython-310.pyc
+backend-python/app/api/v1/endpoints/__pycache__/patients.cpython-310.pyc
+backend-python/app/api/v1/endpoints/patients.py
+backend-python/app/crud/__pycache__/personal_user.cpython-310.pyc
+backend-python/app/models/__pycache__/__init__.cpython-310.pyc
+backend-python/osteoporosis.db
+frontend/src/views/dashboard/Home.vue
+frontend/src/views/dashboard/followup/Records.vue
+frontend/src/views/dashboard/followup/Search.vue

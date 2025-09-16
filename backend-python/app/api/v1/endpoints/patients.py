@@ -282,4 +282,27 @@ def update_risk_assessment(
     if not updated_patient:
         raise HTTPException(status_code=404, detail="患者不存在")
     
-    return {"message": "风险评估更新成功", "patient": updated_patient} 
+    return {"message": "风险评估更新成功", "patient": updated_patient}
+
+
+# @router.get("/by-name", response_model=List[Patient])
+# def get_patients_by_name(
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user_dependency)
+# ):
+#     """个人用户根据姓名获取所有相关患者档案"""
+#     # 检查用户类型
+#     user_type = getattr(current_user, 'user_type', 'personal')
+#     if hasattr(current_user, '__class__') and 'PersonalUser' in str(current_user.__class__):
+#         user_type = 'personal'
+#     
+#     if user_type != 'personal':
+#         raise HTTPException(status_code=403, detail="此接口仅限个人用户使用")
+#     
+#     # 根据用户姓名获取所有相关档案
+#     user_name = getattr(current_user, 'name', None)
+#     if not user_name:
+#         raise HTTPException(status_code=400, detail="用户姓名不存在")
+#     
+#     patients = patient_crud.get_patients_by_name(db, user_name, limit=1000)
+#     return patients 
