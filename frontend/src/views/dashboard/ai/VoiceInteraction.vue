@@ -368,9 +368,39 @@ const stopVoiceInput = (event: Event) => {
 const startRecording = async () => {
   try {
     // 检查浏览器兼容性
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      ElMessage.error('您的浏览器不支持录音功能，请使用Chrome或Firefox浏览器')
+    console.log('检查浏览器兼容性...')
+    console.log('navigator.mediaDevices:', navigator.mediaDevices)
+    console.log('navigator.mediaDevices.getUserMedia:', navigator.mediaDevices?.getUserMedia)
+    console.log('当前协议:', window.location.protocol)
+    console.log('当前域名:', window.location.hostname)
+    
+    if (!navigator.mediaDevices) {
+      ElMessage.error('您的浏览器不支持MediaDevices API，请使用Chrome、Firefox或Safari浏览器')
       return
+    }
+    
+    if (!navigator.mediaDevices.getUserMedia) {
+      ElMessage.error('您的浏览器不支持getUserMedia API，请使用Chrome、Firefox或Safari浏览器')
+      return
+    }
+    
+    // 检查是否为HTTP环境
+    if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+      ElMessage.error('HTTP环境下无法使用麦克风，请使用HTTPS访问或联系管理员配置SSL证书')
+      return
+    }
+    
+    // 检查麦克风权限状态
+    try {
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName })
+      console.log('麦克风权限状态:', permissionStatus.state)
+      
+      if (permissionStatus.state === 'denied') {
+        ElMessage.error('麦克风权限被拒绝，请在浏览器设置中允许此网站访问麦克风')
+        return
+      }
+    } catch (error) {
+      console.warn('无法检查权限状态:', error)
     }
     
     // 检查是否有可用的音频设备（兼容性处理）
@@ -384,6 +414,7 @@ const startRecording = async () => {
     }
     
     // 尝试获取用户媒体，使用更宽松的约束
+    console.log('正在请求麦克风权限...')
     const stream = await navigator.mediaDevices.getUserMedia({ 
       audio: {
         echoCancellation: true,
@@ -391,6 +422,7 @@ const startRecording = async () => {
         autoGainControl: true
       }
     })
+    console.log('麦克风权限获取成功，音频流:', stream)
     
     mediaRecorder = new MediaRecorder(stream, {
       mimeType: 'audio/webm;codecs=opus'
