@@ -59,6 +59,12 @@
                 <el-option label="女" value="female" />
               </el-select>
             </el-col>
+            <el-col :span="4">
+              <el-button @click="clearSearch" type="info" plain>
+                <el-icon><Refresh /></el-icon>
+                清除筛选
+              </el-button>
+            </el-col>
           </el-row>
         </div>
 
@@ -597,13 +603,18 @@ const filteredPatients = computed(() => {
   let result = patients.value
 
   // 关键词搜索
-  if (searchKeyword.value.trim()) {
+  if (searchKeyword.value && searchKeyword.value.trim()) {
     const keyword = searchKeyword.value.toLowerCase().trim()
-    result = result.filter(patient => 
-      patient.name.toLowerCase().includes(keyword) ||
-      patient.patient_id.toLowerCase().includes(keyword) ||
-      patient.phone.includes(keyword)
-    )
+    result = result.filter(patient => {
+      // 安全地检查字段是否存在
+      const name = patient.name ? patient.name.toLowerCase() : ''
+      const patientId = patient.patient_id ? patient.patient_id.toLowerCase() : ''
+      const phone = patient.phone ? patient.phone : ''
+      
+      return name.includes(keyword) || 
+             patientId.includes(keyword) || 
+             phone.includes(keyword)
+    })
   }
 
   // 风险等级筛选
@@ -689,9 +700,7 @@ const fetchPatients = async () => {
     const response = await request.get('/v1/patients/', {
       params: {
         skip: (currentPage.value - 1) * pageSize.value,
-        limit: pageSize.value,
-        search: searchKeyword.value || undefined,
-        risk_level: riskLevelFilter.value || undefined
+        limit: pageSize.value
       }
     })
     
@@ -729,8 +738,16 @@ const refreshPatients = () => {
 }
 
 const handleSearch = () => {
+  // 使用本地过滤，不需要重新调用API
+  // filteredPatients 计算属性会自动处理过滤
   currentPage.value = 1
-  fetchPatients()
+}
+
+const clearSearch = () => {
+  searchKeyword.value = ''
+  riskLevelFilter.value = ''
+  genderFilter.value = ''
+  currentPage.value = 1
 }
 
 const handleSizeChange = (size: number) => {

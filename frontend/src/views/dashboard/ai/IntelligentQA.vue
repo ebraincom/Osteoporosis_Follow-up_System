@@ -382,7 +382,7 @@ const submitQuestion = async () => {
   
   try {
     // 调用AI问答API
-    const response = await fetch('/api/v1/ai-qa/ask', {
+    const response = await fetch('/v1/ai-qa/ask', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

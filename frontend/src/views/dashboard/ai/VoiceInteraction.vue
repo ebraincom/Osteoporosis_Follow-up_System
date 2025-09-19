@@ -259,11 +259,11 @@ const initAudioContext = () => {
   }
 }
 
-// 连接WebSocket
-const connectWebSocket = () => {
-  try {
-    // 使用后端服务的WebSocket端点
-    const wsUrl = `ws://localhost:8000/api/v1/voice/voice-chat?user_id=default`
+  // 连接WebSocket
+  const connectWebSocket = () => {
+    try {
+      // 使用后端服务的WebSocket端点
+      const wsUrl = `ws://117.50.198.126:8000/v1/voice/voice-chat?user_id=default`
     
     websocket = new WebSocket(wsUrl)
     
