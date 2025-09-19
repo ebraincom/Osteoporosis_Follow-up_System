@@ -367,15 +367,20 @@ const stopVoiceInput = (event: Event) => {
 // 开始录音
 const startRecording = async () => {
   try {
-    // 首先检查是否有可用的音频设备
-    const devices = await navigator.mediaDevices.enumerateDevices()
-    const audioInputs = devices.filter(device => device.kind === 'audioinput')
-    
-    console.log('可用的音频输入设备:', audioInputs)
-    
-    if (audioInputs.length === 0) {
-      ElMessage.error('未找到麦克风设备，请检查设备连接')
+    // 检查浏览器兼容性
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      ElMessage.error('您的浏览器不支持录音功能，请使用Chrome或Firefox浏览器')
       return
+    }
+    
+    // 检查是否有可用的音频设备（兼容性处理）
+    let audioInputs = []
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      audioInputs = devices.filter(device => device.kind === 'audioinput')
+      console.log('可用的音频输入设备:', audioInputs)
+    } catch (error) {
+      console.warn('无法枚举设备，但继续尝试录音:', error)
     }
     
     // 尝试获取用户媒体，使用更宽松的约束
@@ -424,13 +429,27 @@ const startRecording = async () => {
   } catch (error: any) {
     console.error('录音失败:', error)
     
+    // 检测浏览器类型
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+    
     // 根据不同的错误类型给出具体的提示
     if (error.name === 'NotFoundError') {
       ElMessage.error('未找到麦克风设备，请检查：1. 耳机是否正确插入 2. 麦克风是否被其他应用占用')
     } else if (error.name === 'NotAllowedError') {
-      ElMessage.error('麦克风权限被拒绝，请在浏览器设置中允许麦克风访问')
+      if (isSafari && isMac) {
+        ElMessage.error('Safari浏览器需要HTTPS才能使用麦克风，或者请在Safari偏好设置中允许此网站访问麦克风')
+      } else {
+        ElMessage.error('麦克风权限被拒绝，请在浏览器设置中允许麦克风访问')
+      }
     } else if (error.name === 'NotReadableError') {
       ElMessage.error('麦克风被其他应用占用，请关闭其他使用麦克风的程序')
+    } else if (error.message && error.message.includes('enumerateDevices')) {
+      if (isSafari) {
+        ElMessage.error('Safari浏览器兼容性问题，建议使用Chrome或Firefox浏览器')
+      } else {
+        ElMessage.error('浏览器兼容性问题，请尝试使用Chrome或Firefox浏览器')
+      }
     } else {
       ElMessage.error(`录音失败: ${error.message}`)
     }
